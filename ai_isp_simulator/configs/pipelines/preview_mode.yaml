@@ -1,0 +1,172 @@
+# 预览模式 Pipeline 配置
+# 支持实时预览、快速处理等场景
+
+pipeline:
+  name: "preview_mode"
+  description: "预览模式，支持实时预览、快速处理等场景"
+  mode: "preview"
+  
+  # 节点配置
+  nodes:
+    # RAW输入节点
+    raw_input:
+      type: "RawInputNode"
+      config:
+        input_type: "simulation"  # file, simulation, camera
+        bayer_pattern: "rggb"
+        width: 1280
+        height: 720
+        bit_depth: 8  # 预览模式使用较低位深度
+        noise_model:
+          enabled: false  # 预览模式关闭噪声模拟以提高性能
+        exposure_simulation:
+          enabled: false
+        motion_simulation:
+          enabled: false
+    
+    # RAW预处理节点（最简化）
+    raw_preproc:
+      type: "RawPreprocNode"
+      implementation: "classic"
+      config:
+        bpc_enabled: true
+        blc_enabled: true
+        lsc_enabled: false  # 预览模式关闭LSC
+        lsc_method: "classic"
+    
+    # 去马赛克节点（快速）
+    demosaic:
+      type: "DemosaicNode"
+      implementation: "classic"
+      config:
+        classic_method: "bilinear"  # 使用最快的双线性插值
+        quality_enhancement:
+          enabled: false  # 关闭质量增强
+    
+    # 白平衡节点（简化）
+    awb:
+      type: "AWBNode"
+      implementation: "classic"
+      config:
+        method: "gray_world"
+        temperature: 5500
+        tint: 0.0
+        adaptive: false  # 预览模式关闭自适应
+    
+    # 色彩校正节点（简化）
+    color_correction:
+      type: "ColorCorrectionNode"
+      implementation: "classic"
+      config:
+        method: "matrix"
+        ccm_matrix: [[1.2, -0.1, -0.1], [-0.05, 1.15, -0.1], [-0.05, -0.1, 1.15]]
+    
+    # 伽马校正节点
+    gamma:
+      type: "GammaNode"
+      implementation: "classic"
+      config:
+        gamma: 2.2
+        method: "power_law"
+    
+    # 降噪节点（最简化）
+    denoising:
+      type: "DenoisingNode"
+      implementation: "classic"
+      config:
+        method: "gaussian"  # 使用最简单的高斯滤波
+        strength: 0.05
+        temporal_enabled: false
+    
+    # 锐化节点（最简化）
+    sharpening:
+      type: "SharpeningNode"
+      implementation: "classic"
+      config:
+        method: "unsharp_mask"
+        strength: 0.1
+        radius: 0.5
+    
+    # 预览输出节点
+    preview_output:
+      type: "PreviewOutputNode"
+      config:
+        format: "rgb"
+        scale_factor: 1.0  # 保持原始尺寸
+        quality: 70  # 较低质量以节省带宽
+        save_path: "preview/preview_{timestamp}.jpg"
+        display_mode: "real_time"  # real_time, save_only, both
+    
+    # 缩略图输出节点
+    thumbnail_output:
+      type: "ThumbnailOutputNode"
+      config:
+        format: "jpeg"
+        scale_factor: 0.25  # 缩略图尺寸
+        quality: 60
+        save_path: "thumbnails/thumb_{timestamp}.jpg"
+        max_size: [320, 240]  # 最大缩略图尺寸
+  
+  # 连接配置
+  connections:
+    - from: "raw_input.output"
+      to: "raw_preproc.input"
+    
+    - from: "raw_preproc.output"
+      to: "demosaic.input"
+    
+    - from: "demosaic.output"
+      to: "awb.input"
+    
+    - from: "awb.output"
+      to: "color_correction.input"
+    
+    - from: "color_correction.output"
+      to: "gamma.input"
+    
+    - from: "gamma.output"
+      to: "denoising.input"
+    
+    - from: "denoising.output"
+      to: "sharpening.input"
+    
+    - from: "sharpening.output"
+      to: "preview_output.input"
+    
+    # 缩略图分支
+    - from: "sharpening.output"
+      to: "thumbnail_output.input"
+  
+  # 执行配置
+  execution:
+    mode: "streaming"  # single, batch, streaming
+    batch_size: 1
+    enable_parallel: false  # 预览模式关闭并行处理
+    enable_caching: false  # 预览模式关闭缓存
+    
+  # 质量分析配置
+  quality_analysis:
+    enabled: false  # 预览模式关闭质量分析以提高性能
+    
+  # 性能配置
+  performance:
+    target_fps: 60.0  # 预览模式，60fps
+    max_latency_ms: 16  # 16ms对应60fps
+    enable_profiling: false  # 预览模式关闭性能分析
+    enable_optimization: true
+    memory_limit_mb: 256  # 限制内存使用
+    
+  # 预览配置
+  preview:
+    display_resolution: [1280, 720]
+    refresh_rate: 60
+    enable_vsync: true
+    enable_fullscreen: false
+    window_title: "AI ISP Preview"
+    
+  # 缩略图配置
+  thumbnail:
+    enabled: true
+    update_interval: 1.0  # 每秒更新一次缩略图
+    max_count: 100  # 最多保存100个缩略图
+    auto_cleanup: true  # 自动清理旧缩略图

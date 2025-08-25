@@ -1,0 +1,184 @@
+# 拍照模式 Pipeline 配置
+# 支持单摄HDR、多摄融合等场景
+
+pipeline:
+  name: "photo_mode"
+  description: "拍照模式，支持HDR、多摄等高级功能"
+  mode: "photo"
+  
+  # 节点配置
+  nodes:
+    # RAW输入节点
+    raw_input:
+      type: "RawInputNode"
+      config:
+        input_type: "simulation"  # file, simulation, camera
+        bayer_pattern: "rggb"
+        width: 4000
+        height: 3000
+        bit_depth: 12
+        noise_model:
+          enabled: true
+          read_noise: 2.0
+          shot_noise: 0.1
+          dark_current: 0.01
+        exposure_simulation:
+          enabled: true
+          exposure_times: [1.0/30.0, 1.0/15.0, 1.0/8.0]
+          iso_values: [100, 200, 400]
+    
+    # RAW预处理节点
+    raw_preproc:
+      type: "RawPreprocNode"
+      implementation: "classic"  # classic, ai, hybrid
+      config:
+        bpc_enabled: true
+        blc_enabled: true
+        lsc_enabled: true
+        lsc_method: "ai"  # classic, ai
+    
+    # 去马赛克节点
+    demosaic:
+      type: "DemosaicNode"
+      implementation: "ai"  # classic, ai, hybrid
+      config:
+        classic_method: "edge_aware"
+        ai_model_path: "models/demosaic_unet.onnx"
+        ai_model_config:
+          input_size: [512, 512]
+          batch_size: 1
+          device: "cpu"
+        quality_enhancement:
+          enabled: true
+          sharpening: 0.1
+          noise_reduction: 0.05
+    
+    # HDR对齐节点
+    hdr_align:
+      type: "HDRAlignNode"
+      implementation: "ai"
+      config:
+        method: "optical_flow"  # optical_flow, feature_matching, ai
+        ai_model_path: "models/hdr_align_net.onnx"
+        max_displacement: 50
+        confidence_threshold: 0.8
+    
+    # HDR融合节点
+    hdr_fusion:
+      type: "HDRFusionNode"
+      implementation: "ai"
+      config:
+        method: "exposure_fusion"  # exposure_fusion, weight_map, ai
+        ai_model_path: "models/hdr_fusion_net.onnx"
+        fusion_weights: [0.3, 0.4, 0.3]
+    
+    # 色调映射节点
+    tone_mapping:
+      type: "ToneMappingNode"
+      implementation: "hybrid"
+      config:
+        method: "adaptive"  # global, local, adaptive, ai
+        ai_model_path: "models/tone_mapping_net.onnx"
+        gamma: 2.2
+        contrast: 1.1
+        saturation: 1.0
+    
+    # 白平衡节点
+    awb:
+      type: "AWBNode"
+      implementation: "classic"
+      config:
+        method: "gray_world"  # gray_world, white_patch, ai
+        temperature: 5500
+        tint: 0.0
+    
+    # 色彩校正节点
+    color_correction:
+      type: "ColorCorrectionNode"
+      implementation: "classic"
+      config:
+        method: "matrix"  # matrix, lookup_table, ai
+        ccm_matrix: [[1.5, -0.3, -0.2], [-0.1, 1.4, -0.3], [-0.1, -0.2, 1.3]]
+    
+    # 锐化节点
+    sharpening:
+      type: "SharpeningNode"
+      implementation: "hybrid"
+      config:
+        method: "unsharp_mask"  # unsharp_mask, laplacian, ai
+        ai_model_path: "models/sharpen_net.onnx"
+        strength: 0.3
+        radius: 1.0
+    
+    # 降噪节点
+    denoising:
+      type: "DenoisingNode"
+      implementation: "ai"
+      config:
+        method: "bilateral"  # bilateral, non_local_means, ai
+        ai_model_path: "models/denoise_net.onnx"
+        strength: 0.2
+    
+    # 输出节点
+    output:
+      type: "OutputNode"
+      config:
+        format: "rgb"  # rgb, yuv, jpeg
+        quality: 95
+        save_path: "output/photo_{timestamp}.jpg"
+  
+  # 连接配置
+  connections:
+    - from: "raw_input.output"
+      to: "raw_preproc.input"
+    
+    - from: "raw_preproc.output"
+      to: "demosaic.input"
+    
+    - from: "demosaic.output"
+      to: "hdr_align.input"
+    
+    - from: "hdr_align.output"
+      to: "hdr_fusion.input"
+    
+    - from: "hdr_fusion.output"
+      to: "tone_mapping.input"
+    
+    - from: "tone_mapping.output"
+      to: "awb.input"
+    
+    - from: "awb.output"
+      to: "color_correction.input"
+    
+    - from: "color_correction.output"
+      to: "sharpening.input"
+    
+    - from: "sharpening.output"
+      to: "denoising.input"
+    
+    - from: "denoising.output"
+      to: "output.input"
+  
+  # 执行配置
+  execution:
+    mode: "single"  # single, batch, streaming
+    batch_size: 1
+    enable_parallel: false
+    enable_caching: true
+    
+  # 质量分析配置
+  quality_analysis:
+    enabled: true
+    metrics:
+      - "psnr"
+      - "ssim"
+      - "lpips"
+      - "brisque"
+    reference_path: "reference/ground_truth.jpg"
+    
+  # 性能配置
+  performance:
+    target_fps: 1.0  # 拍照模式，1fps足够
+    max_latency_ms: 1000
+    enable_profiling: true
+    enable_optimization: true
