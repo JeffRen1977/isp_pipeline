@@ -1,0 +1,48 @@
+flowchart LR
+    %% Title at the top
+    title["📸 Automatic Exposure (AE) System Inputs"]:::title
+
+    %% Input Categories - Left side, pointing right
+    subgraph Inputs["📥 System Inputs"]
+        direction TB
+        
+        subgraph Calib[Calibration]
+            Calib1["Sensor Sensitivity"]
+            Calib2["Dynamic Range"]
+            Calib3["Color Calibration"]
+        end
+        
+        subgraph Stats[Image Analysis]
+            Stats1["Brightness Distribution"]
+            Stats2["Histogram Analysis"]
+            Stats3["Exposure Detection"]
+        end
+        
+        subgraph HW[Hardware Status]
+            HW1["Current Exposure Time"]
+            HW2["Current Gain Settings"]
+            HW3["Sensor Type & Mode"]
+        end
+        
+        subgraph Debug[Debug Info]
+            Debug1["Environment Data"]
+            Debug2["Parameter History"]
+            Debug3["Optimization Feedback"]
+        end
+    end
+
+    %% Main AE System Node - Center, larger
+    AE["🔄\n\nAE System\n\nAutomatic Exposure\nControl\n\n🔄"]:::main
+
+    %% Output - Right side
+    Output["📤\n\nOptimized\nExposure\nSettings\n\n📤"]:::output
+
+    %% Connections - Left to right flow
+    Inputs --> AE
+    AE --> Output
+
+    %% Styles - Larger and more prominent
+    classDef title fill:#e1f5fe,stroke:#0277bd,stroke-width:3px,color:#000,font-weight:bold,font-size:18px,text-align:center
+    classDef main fill:#e1f5fe,stroke:#0277bd,stroke-width:4px,color:#000,font-weight:bold,font-size:16px,min-width:200px,min-height:150px
+    classDef input fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000,font-size:13px,min-width:120px
+    classDef output fill:#e8f5e8,stroke:#388e3c,stroke-width:3px,color:#000,font-weight:bold,font-size:14px,min-width:150px,min-height:100px

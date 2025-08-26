@@ -1,0 +1,95 @@
+flowchart LR
+    A[Camera ISP Tuning Challenges]:::title
+    
+    subgraph B[Quality Perception]
+        B1[Subjective Image Quality]
+        B2[Cultural Preferences]
+        B3[Regional Tastes]
+    end
+    
+    subgraph C[System Complexity]
+        C1[ISP Block Interdependencies]
+        C2[3A Algorithm Coupling]
+        C3[Cascading Effects]
+    end
+    
+    subgraph D[Parameter Management]
+        D1[Hundreds of Parameters]
+        D2[Complex Combinations]
+        D3[Manual Optimization Impossible]
+    end
+    
+    subgraph E[Scene Diversity]
+        E1[Lighting Conditions]
+        E2[Motion Scenarios]
+        E3[Environmental Factors]
+    end
+    
+    subgraph F[Hardware Issues]
+        F1[Manufacturing Tolerances]
+        F2[Sensor Variations]
+        F3[Lens Differences]
+    end
+    
+    subgraph G[Project Constraints]
+        G1[Tight Schedules]
+        G2[Resource Limitations]
+        G3[Quality Trade-offs]
+    end
+    
+    subgraph H[Simulation Gap]
+        H1[Bit-True Simulation]
+        H2[Timing Differences]
+        H3[Hardware Interactions]
+    end
+    
+    subgraph I[Debugging Complexity]
+        I1[Issue Isolation]
+        I2[Block Dependencies]
+        I3[Parameter Tracking]
+    end
+    
+    subgraph J[Third-Party Support]
+        J1[Multiple App Pipelines]
+        J2[Software Stack Levels]
+        J3[Consistent Quality]
+    end
+    
+    subgraph K[Innovation Pace]
+        K1[New Sensor Technologies]
+        K2[Advanced Algorithms]
+        K3[Computational Features]
+    end
+    
+    %% Main connections
+    A --> B
+    A --> C
+    A --> D
+    A --> E
+    A --> F
+    A --> G
+    A --> H
+    A --> I
+    A --> J
+    A --> K
+    
+    %% Impact connections
+    B --> L[Complex Tuning Process]:::process
+    C --> L
+    D --> L
+    E --> L
+    F --> L
+    G --> L
+    H --> L
+    I --> L
+    J --> L
+    K --> L
+    
+    L --> M[Impact on Image Quality]:::impact
+    L --> N[Development Timeline]:::impact
+    L --> O[User Experience]:::impact
+    
+    %% Print-friendly color styles
+    classDef title fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000,font-weight:bold
+    classDef process fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef impact fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000,font-weight:bold

@@ -1,0 +1,36 @@
+flowchart LR
+    A[Automatic Exposure AE System Outputs]
+    
+    B[AE System]
+    
+    subgraph C[Sensor Configuration]
+        D[Exposure Time]
+        E[Analog Gain]
+        F[Digital Gain]
+    end
+    
+    subgraph G[ISP Settings]
+        H[AE Statistics Module]
+        I[Digital Gain in ISP]
+    end
+    
+    subgraph J[Flash Settings]
+        K[Flash Switch On/Off]
+        L[Flash LED Current]
+    end
+    
+    B --> C
+    B --> G
+    B --> J
+    
+    C --> M[Final Result: Optimized camera exposure]
+    G --> M
+    J --> M
+    
+    D --> N[Controls light duration]
+    E --> O[Amplifies analog signal]
+    F --> P[Increases pixel values]
+    H --> Q[Analyzes luminance distribution]
+    I --> R[Further brightness adjustment]
+    K --> S[Scene-based flash control]
+    L --> T[Adjustable flash intensity]

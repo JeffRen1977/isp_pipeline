@@ -1,0 +1,78 @@
+flowchart TD
+    A[HDR Evolution Timeline in Mobile Phones]:::title
+    
+    subgraph Stage1[Early 2010s: Software HDR]
+        A1[Software-Centric Approach]
+        A2[Multi-Exposure Merging]
+        A3[3-Frame Capture]
+        A4[CPU Processing]
+        
+        A1 --> A2
+        A2 --> A3
+        A3 --> A4
+    end
+    
+    subgraph Stage2[Mid-2010s: Hardware-Assisted HDR]
+        B1[Enhanced Sensor Capabilities]
+        B2[Real-time HDR Preview]
+        B3[Accelerated Processing]
+        B4[ISP Integration]
+        
+        B1 --> B2
+        B2 --> B3
+        B3 --> B4
+    end
+    
+    subgraph Stage3[Late 2010s-Present: Computational HDR]
+        C1[Advanced Multi-Frame Processing]
+        C2[AI-Powered Algorithms]
+        C3[Semantic Segmentation]
+        C4[HDR+ Technology]
+        C5[Ghosting Elimination]
+        
+        C1 --> C2
+        C2 --> C3
+        C3 --> C4
+        C4 --> C5
+    end
+    
+    %% Timeline connections
+    A --> Stage1
+    Stage1 --> Stage2
+    Stage2 --> Stage3
+    
+    %% Key limitations and improvements
+    subgraph Limitations1[Early Limitations]
+        L1[Slow Processing Speed]
+        L2[Ghosting Issues]
+        L3[Limited Dynamic Range]
+        L4[Poor Low-Light Performance]
+    end
+    
+    subgraph Improvements2[Mid Improvements]
+        I1[Faster Processing]
+        I2[Reduced Ghosting]
+        I3[Better Sensor Range]
+        I4[Real-time Preview]
+    end
+    
+    subgraph Breakthroughs3[Modern Breakthroughs]
+        B1[AI Scene Analysis]
+        B2[Multi-Frame Burst]
+        B3[Semantic Processing]
+        B4[Professional Quality]
+    end
+    
+    %% Connect limitations and improvements
+    Stage1 --> Limitations1
+    Stage2 --> Improvements2
+    Stage3 --> Breakthroughs3
+    
+    %% Final result
+    Final[Result: Professional-grade HDR Accessible to Everyday Users]:::final
+    
+    Stage3 --> Final
+    
+    %% White background styles
+    classDef title fill:#ffffff,stroke:#000000,stroke-width:2px,color:#000000,font-weight:bold
+    classDef final fill:#ffffff,stroke:#000000,stroke-width:2px,color:#000000,font-weight:bold

@@ -1,0 +1,29 @@
+flowchart TD
+    A[Software Layer] --> B[Hardware Layer]
+    B --> C[Output]
+    
+    subgraph SW[Software]
+        D[Sensor Driver]
+        E[Photometry Analysis]
+        F[Scene Analysis]
+        G[Exposure Calculation]
+        H[Parameter Distribution]
+        
+        D --> E
+        E --> F
+        F --> G
+        G --> H
+        H --> D
+    end
+    
+    subgraph HW[Hardware]
+        I[Image Sensor]
+        J[ISP Front-End]
+        I --> J
+    end
+    
+    D -.->|Control| I
+    J -->|Data| E
+    J --> C[Final Image]
+
+
