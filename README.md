@@ -462,14 +462,30 @@ Final processed image:
 #### Intermediate Results
 
 All pipeline stages generate debug outputs:
-- `front_01_raw_input.png` - Original RAW data (Bayer pattern)
-- `front_02_black_level.png` - After black level correction
-- `front_03_digital_gain.png` - After digital gain (1.5x)
-- `front_03_5_awb_raw.png` - After RAW white balance (Gray World)
-- `front_04_demosaic.png` - After demosaic (first RGB image)
-- `front_05_color_correction.png` - After color correction (identity)
-- `front_06_tone_mapping.png` - After tone mapping (Reinhard)
-- `front_output_final.png` - Final processed image (ready for display)
+
+![RAW Input](ai_isp_simulator/results/front_01_raw_input.png)
+*Original RAW data (Bayer pattern)*
+
+![After Black Level](ai_isp_simulator/results/front_02_black_level.png)
+*After black level correction*
+
+![After Digital Gain](ai_isp_simulator/results/front_03_digital_gain.png)
+*After digital gain (1.5x)*
+
+![After RAW White Balance](ai_isp_simulator/results/front_03_5_awb_raw.png)
+*After RAW white balance (Gray World algorithm)*
+
+![After Demosaic](ai_isp_simulator/results/front_04_demosaic.png)
+*After demosaic (first RGB image)*
+
+![After Color Correction](ai_isp_simulator/results/front_05_color_correction.png)
+*After color correction (identity matrix)*
+
+![After Tone Mapping](ai_isp_simulator/results/front_06_tone_mapping.png)
+*After tone mapping (Reinhard algorithm)*
+
+![Final Output](ai_isp_simulator/results/front_output_final.png)
+*Final processed image (ready for display)*
 
 ## 🔮 Future Work
 
