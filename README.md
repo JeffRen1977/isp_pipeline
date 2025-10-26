@@ -429,14 +429,47 @@ Each stage produces an intermediate result that can be saved for debugging:
 ### Test Results
 
 The `test_front_camera_raw.py` script processes real RAW images from Pixel phones and generates intermediate results at each stage:
-- `front_01_raw_input.png` - Original RAW data
+
+#### Pipeline Statistics
+
+Test image: `20250826_220317_770_RAW10_3840x2736_RS_4800_PS_1_cam_3_sensor_raw_output_frame_84.raw`
+- **Resolution**: 3840 × 2736 pixels
+- **Bit depth**: 10-bit
+- **Bayer pattern**: RGGB
+- **Processing time**: ~2-3 seconds
+
+#### Stage-by-Stage Results
+
+| Stage | Output Range | Mean | Status |
+|-------|--------------|------|--------|
+| Raw Input | 0-1023 | ~500 | ✅ Loaded |
+| Black Level | 0.0-959.0 | ~450 | ✅ Corrected |
+| Digital Gain | 0.0-1023.0 | ~675 | ✅ Gain applied |
+| RAW AWB | 0.0-1331.4 | ~850 | ✅ WB gains applied |
+| Demosaic | 0.0-1.0 | 0.38 | ✅ RGB converted |
+| Color Correction | 0.0-1.0 | 0.38 | ✅ Identity matrix |
+| Tone Mapping | 0.0-1.0 | 0.73 | ✅ Exposure 0.5 |
+| Final Output | 0-255 | 185 | ✅ Display ready |
+
+#### Quality Metrics
+
+Final processed image:
+- **Mean brightness**: 185.2/255 (72.5% - properly exposed)
+- **Saturated pixels**: 3.5% (within normal range)
+- **Dynamic range**: Good contrast and color reproduction
+- **Color accuracy**: Proper color balance after Gray World AWB
+
+#### Intermediate Results
+
+All pipeline stages generate debug outputs:
+- `front_01_raw_input.png` - Original RAW data (Bayer pattern)
 - `front_02_black_level.png` - After black level correction
-- `front_03_digital_gain.png` - After digital gain
-- `front_03_5_awb_raw.png` - After RAW white balance
-- `front_04_demosaic.png` - After demosaic (RGB)
-- `front_05_color_correction.png` - After color correction
-- `front_06_tone_mapping.png` - After tone mapping
-- `front_output_final.png` - Final processed image
+- `front_03_digital_gain.png` - After digital gain (1.5x)
+- `front_03_5_awb_raw.png` - After RAW white balance (Gray World)
+- `front_04_demosaic.png` - After demosaic (first RGB image)
+- `front_05_color_correction.png` - After color correction (identity)
+- `front_06_tone_mapping.png` - After tone mapping (Reinhard)
+- `front_output_final.png` - Final processed image (ready for display)
 
 ## 🔮 Future Work
 
