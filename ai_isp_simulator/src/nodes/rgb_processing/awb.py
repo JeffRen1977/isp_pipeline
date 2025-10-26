@@ -165,49 +165,51 @@ class AWBNode(ProcessingNode):
         return {"output": output_frame}
     
     def _gray_world_awb(self, rgb_data: np.ndarray) -> np.ndarray:
-        """灰度世界白平衡"""
-        config = self.config["gray_world_config"]
-        sat_threshold = config["saturation_threshold"]
-        bright_threshold = config["brightness_threshold"]
-        
-        # 转换为浮点数
-        rgb_float = rgb_data.astype(np.float32) / 255.0
-        
-        # 计算HSV
-        hsv = cv2.cvtColor(rgb_data, cv2.COLOR_RGB2HSV)
-        hsv_float = hsv.astype(np.float32)
-        hsv_float[:, :, 1] /= 255.0  # 归一化饱和度
-        hsv_float[:, :, 2] /= 255.0  # 归一化亮度
-        
-        # 创建掩码
-        mask = (hsv_float[:, :, 1] < sat_threshold) & (hsv_float[:, :, 2] > bright_threshold)
-        
-        if np.sum(mask) == 0:
-            # 如果没有合适的像素，使用整个图像
-            mask = np.ones_like(mask, dtype=bool)
+        """灰度世界白平衡 - 固定版本"""
+        # 处理输入数据类型，确保归一化到 [0, 1]
+        if rgb_data.dtype == np.uint8:
+            rgb_float = rgb_data.astype(np.float32) / 255.0
+        elif rgb_data.dtype == np.uint16:
+            rgb_float = rgb_data.astype(np.float32) / 65535.0
+        else:  # float32 or float64
+            # 确保数据在合理范围内
+            rgb_float = np.clip(rgb_data, 0, 1).astype(np.float32)
         
         # 计算每个通道的平均值
-        channel_means = []
-        for c in range(3):
-            channel_mean = np.mean(rgb_float[mask, c])
-            channel_means.append(channel_mean)
+        r_mean = np.mean(rgb_float[:, :, 0])
+        g_mean = np.mean(rgb_float[:, :, 1])
+        b_mean = np.mean(rgb_float[:, :, 2])
         
-        # 计算全局平均
-        global_mean = np.mean(channel_means)
+        # Gray World: 假设灰色是通道平均值相等
+        # 计算增益使得三个通道平均值相等
+        avg_mean = (r_mean + g_mean + b_mean) / 3.0
         
         # 计算增益
-        gains = [global_mean / mean if mean > 0 else 1.0 for mean in channel_means]
+        r_gain = avg_mean / r_mean if r_mean > 0.001 else 1.0
+        g_gain = avg_mean / g_mean if g_mean > 0.001 else 1.0
+        b_gain = avg_mean / b_mean if b_mean > 0.001 else 1.0
         
-        # 应用白平衡
-        balanced_data = np.zeros_like(rgb_float)
-        for c in range(3):
-            balanced_data[:, :, c] = rgb_float[:, :, c] * gains[c]
+        # 限制增益范围，避免过校正 (0.5x 到 2.0x)
+        r_gain = np.clip(r_gain, 0.5, 2.0)
+        g_gain = np.clip(g_gain, 0.5, 2.0)
+        b_gain = np.clip(b_gain, 0.5, 2.0)
         
-        # 裁剪到[0, 1]范围
+        # 应用增益
+        balanced_data = rgb_float.copy()
+        balanced_data[:, :, 0] = rgb_float[:, :, 0] * r_gain
+        balanced_data[:, :, 1] = rgb_float[:, :, 1] * g_gain
+        balanced_data[:, :, 2] = rgb_float[:, :, 2] * b_gain
+        
+        # 裁剪到 [0, 1]
         balanced_data = np.clip(balanced_data, 0, 1)
         
-        # 转换回uint8
-        return (balanced_data * 255).astype(np.uint8)
+        # 根据输入数据类型返回
+        if rgb_data.dtype == np.uint8:
+            return (balanced_data * 255).astype(np.uint8)
+        elif rgb_data.dtype == np.uint16:
+            return (balanced_data * 65535).astype(np.uint16)
+        else:  # float32 or float64
+            return balanced_data.astype(np.float32)
     
     def _white_patch_awb(self, rgb_data: np.ndarray) -> np.ndarray:
         """白块白平衡"""

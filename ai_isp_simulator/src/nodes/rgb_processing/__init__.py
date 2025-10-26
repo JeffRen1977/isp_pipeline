@@ -1,10 +1,21 @@
 """
-RGB处理节点模块
-包含RGB域的各种处理节点
+RGB Processing Nodes Module
+
+This module contains nodes for processing RGB image data:
+- Demosaicing
+- Color correction
+- Tone mapping
+- YUV conversion
 """
 
-from .awb import AWBNode
+from .demosaic import DemosaicNode
+from .color_correction import ColorCorrectionNode
+from .tone_mapping import ToneMappingNode
+from .yuv_conversion import YUVConversionNode
 
 __all__ = [
-    'AWBNode'
+    "DemosaicNode",
+    "ColorCorrectionNode",
+    "ToneMappingNode", 
+    "YUVConversionNode"
 ]

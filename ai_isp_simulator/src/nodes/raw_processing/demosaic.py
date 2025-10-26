@@ -171,45 +171,39 @@ class DemosaicNode(ProcessingNode):
             raise ValueError(f"不支持的经典方法: {method}")
     
     def _demosaic_bilinear(self, raw_data: np.ndarray, bayer_pattern: BayerPattern) -> np.ndarray:
-        """双线性插值去马赛克"""
-        height, width = raw_data.shape
+        """双线性插值去马赛克 - 使用OpenCV实现"""
+        # Clip input data to prevent negative values
+        raw_data = np.clip(raw_data, 0, None)
         
-        # 创建RGB图像
-        rgb_data = np.zeros((height, width, 3), dtype=raw_data.dtype)
+        # Convert to uint16 for OpenCV (0-65535 range)
+        if raw_data.dtype == np.float32 or raw_data.dtype == np.float64:
+            # Normalize to 0-1 range, then scale to uint16
+            max_val = raw_data.max() if raw_data.max() > 1.0 else 1.0
+            raw_normalized = np.clip(raw_data / max_val, 0, 1)
+            raw_data = (raw_normalized * 65535.0).astype(np.uint16)
+        elif raw_data.dtype == np.uint16:
+            # Already in uint16, pass through
+            raw_data = raw_data
+        else:
+            raw_data = raw_data.astype(np.uint16)
         
-        # 根据Bayer模式分配颜色通道
+        # Use OpenCV's bilinear demosaic
         if bayer_pattern == BayerPattern.RGGB:
-            # R G
-            # G B
-            rgb_data[0::2, 0::2, 0] = raw_data[0::2, 0::2]  # R
-            rgb_data[0::2, 1::2, 1] = raw_data[0::2, 1::2]  # G
-            rgb_data[1::2, 0::2, 1] = raw_data[1::2, 0::2]  # G
-            rgb_data[1::2, 1::2, 2] = raw_data[1::2, 1::2]  # B
+            pattern = cv2.COLOR_BayerRG2RGB
         elif bayer_pattern == BayerPattern.GRBG:
-            # G R
-            # B G
-            rgb_data[0::2, 0::2, 1] = raw_data[0::2, 0::2]  # G
-            rgb_data[0::2, 1::2, 0] = raw_data[0::2, 1::2]  # R
-            rgb_data[1::2, 0::2, 2] = raw_data[1::2, 0::2]  # B
-            rgb_data[1::2, 1::2, 1] = raw_data[1::2, 1::2]  # G
+            pattern = cv2.COLOR_BayerGR2RGB
         elif bayer_pattern == BayerPattern.GBRG:
-            # G B
-            # R G
-            rgb_data[0::2, 0::2, 1] = raw_data[0::2, 0::2]  # G
-            rgb_data[0::2, 1::2, 2] = raw_data[0::2, 1::2]  # B
-            rgb_data[1::2, 0::2, 0] = raw_data[1::2, 0::2]  # R
-            rgb_data[1::2, 1::2, 1] = raw_data[1::2, 1::2]  # G
+            pattern = cv2.COLOR_BayerGB2RGB
         elif bayer_pattern == BayerPattern.BGGR:
-            # B G
-            # G R
-            rgb_data[0::2, 0::2, 2] = raw_data[0::2, 0::2]  # B
-            rgb_data[0::2, 1::2, 1] = raw_data[0::2, 1::2]  # G
-            rgb_data[1::2, 0::2, 1] = raw_data[1::2, 0::2]  # G
-            rgb_data[1::2, 1::2, 0] = raw_data[1::2, 1::2]  # R
+            pattern = cv2.COLOR_BayerBG2RGB
+        else:
+            raise ValueError(f"Unsupported Bayer pattern: {bayer_pattern}")
         
-        # 双线性插值填充缺失的像素
-        for c in range(3):
-            rgb_data[:, :, c] = self._interpolate_channel(rgb_data[:, :, c])
+        # Convert Bayer to RGB using bilinear interpolation
+        rgb_data = cv2.cvtColor(raw_data, pattern)
+        
+        # Convert back to float32 and normalize to [0, 1] range
+        rgb_data = rgb_data.astype(np.float32) / 65535.0
         
         return rgb_data
     
