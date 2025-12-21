@@ -1,6 +1,6 @@
 """
-去马赛克节点：将RAW Bayer数据转换为RGB图像
-支持传统算法（双线性、VNG等）和AI实现
+Demosaic Node: Converts RAW Bayer data to RGB image
+Supports traditional algorithms (bilinear, VNG, etc.) and AI implementation
 """
 
 import numpy as np
@@ -11,7 +11,7 @@ from ...core.frame import Frame, ColorFormat, BayerPattern
 
 
 class DemosaicNode(ProcessingNode):
-    """去马赛克节点"""
+    """Demosaic node"""
     
     def __init__(
         self,
@@ -21,17 +21,17 @@ class DemosaicNode(ProcessingNode):
         enabled: bool = True
     ):
         """
-        初始化去马赛克节点
+        Initialize demosaic node
         
         Args:
-            node_id: 节点ID
-            config: 配置参数
-            implementation: 实现类型
-            enabled: 是否启用
+            node_id: Node ID
+            config: Configuration parameters
+            implementation: Implementation type
+            enabled: Whether enabled
         """
         super().__init__(node_id, config, implementation, enabled)
         
-        # 默认配置
+        # Default configuration
         default_config = {
             "classic_method": "bilinear",  # bilinear, vng, edge_aware
             "ai_model_path": "",
@@ -51,26 +51,26 @@ class DemosaicNode(ProcessingNode):
         if config:
             self.config.update(config)
         
-        # AI模型（延迟加载）
+        # AI model (lazy loading)
         self._ai_model = None
         
-        # 验证配置
+        # Validate configuration
         self._validate_config()
     
     def _validate_config(self):
-        """验证配置参数"""
+        """Validate configuration parameters"""
         classic_methods = ["bilinear", "vng", "edge_aware"]
         if self.config["classic_method"] not in classic_methods:
-            raise ValueError(f"不支持的经典方法: {self.config['classic_method']}")
+            raise ValueError(f"Unsupported classic method: {self.config['classic_method']}")
         
         if self.implementation == ImplementationType.AI and not self.config["ai_model_path"]:
-            self.logger.warning("AI模式未指定模型路径，将使用经典方法")
+            self.logger.warning("AI mode: model path not specified, will use classic method")
     
     def _process_classic(self, inputs: Dict[str, Union[Frame, np.ndarray]]) -> Dict[str, Union[Frame, np.ndarray]]:
-        """传统算法实现"""
+        """Traditional algorithm implementation"""
         input_data = inputs.get("input")
         if input_data is None:
-            raise ValueError("输入数据为空")
+            raise ValueError("Input data is empty")
         
         if isinstance(input_data, Frame):
             raw_data = input_data.data
@@ -78,17 +78,17 @@ class DemosaicNode(ProcessingNode):
             metadata = input_data
         else:
             raw_data = input_data
-            bayer_pattern = BayerPattern.RGGB  # 默认
+            bayer_pattern = BayerPattern.RGGB  # Default
             metadata = None
         
-        # 执行去马赛克
+        # Execute demosaic
         rgb_data = self._demosaic_classic(raw_data, bayer_pattern)
         
-        # 质量增强
+        # Quality enhancement
         if self.config["quality_enhancement"]["enabled"]:
             rgb_data = self._enhance_quality(rgb_data)
         
-        # 创建输出Frame
+        # Create output Frame
         if metadata:
             output_frame = Frame(
                 data=rgb_data,
@@ -108,10 +108,10 @@ class DemosaicNode(ProcessingNode):
         return {"output": output_frame}
     
     def _process_ai(self, inputs: Dict[str, Union[Frame, np.ndarray]]) -> Dict[str, Union[Frame, np.ndarray]]:
-        """AI算法实现"""
+        """AI algorithm implementation"""
         input_data = inputs.get("input")
         if input_data is None:
-            raise ValueError("输入数据为空")
+            raise ValueError("Input data is empty")
         
         if isinstance(input_data, Frame):
             raw_data = input_data.data
@@ -119,26 +119,26 @@ class DemosaicNode(ProcessingNode):
             metadata = input_data
         else:
             raw_data = input_data
-            bayer_pattern = BayerPattern.RGGB  # 默认
+            bayer_pattern = BayerPattern.RGGB  # Default
             metadata = None
         
-        # 加载AI模型
+        # Load AI model
         if self._ai_model is None:
             self._load_ai_model()
         
-        # 执行AI去马赛克
+        # Execute AI demosaic
         if self._ai_model is not None:
             rgb_data = self._demosaic_ai(raw_data, bayer_pattern)
         else:
-            # 回退到经典方法
-            self.logger.warning("AI模型加载失败，使用经典方法")
+            # Fallback to classic method
+            self.logger.warning("AI model loading failed, using classic method")
             rgb_data = self._demosaic_classic(raw_data, bayer_pattern)
         
-        # 质量增强
+        # Quality enhancement
         if self.config["quality_enhancement"]["enabled"]:
             rgb_data = self._enhance_quality(rgb_data)
         
-        # 创建输出Frame
+        # Create output Frame
         if metadata:
             output_frame = Frame(
                 data=rgb_data,
@@ -158,7 +158,7 @@ class DemosaicNode(ProcessingNode):
         return {"output": output_frame}
     
     def _demosaic_classic(self, raw_data: np.ndarray, bayer_pattern: BayerPattern) -> np.ndarray:
-        """经典去马赛克算法"""
+        """Classic demosaic algorithm"""
         method = self.config["classic_method"]
         
         if method == "bilinear":
@@ -168,10 +168,10 @@ class DemosaicNode(ProcessingNode):
         elif method == "edge_aware":
             return self._demosaic_edge_aware(raw_data, bayer_pattern)
         else:
-            raise ValueError(f"不支持的经典方法: {method}")
+            raise ValueError(f"Unsupported classic method: {method}")
     
     def _demosaic_bilinear(self, raw_data: np.ndarray, bayer_pattern: BayerPattern) -> np.ndarray:
-        """双线性插值去马赛克 - 使用OpenCV实现"""
+        """Bilinear interpolation demosaic - using OpenCV implementation"""
         # Clip input data to prevent negative values
         raw_data = np.clip(raw_data, 0, None)
         
@@ -208,8 +208,8 @@ class DemosaicNode(ProcessingNode):
         return rgb_data
     
     def _demosaic_vng(self, raw_data: np.ndarray, bayer_pattern: BayerPattern) -> np.ndarray:
-        """VNG (Variable Number of Gradients) 去马赛克"""
-        # 使用OpenCV的VNG实现
+        """VNG (Variable Number of Gradients) demosaic"""
+        # Use OpenCV's VNG implementation
         if bayer_pattern == BayerPattern.RGGB:
             pattern = cv2.COLOR_BayerRG2RGB_VNG
         elif bayer_pattern == BayerPattern.GRBG:
@@ -219,27 +219,27 @@ class DemosaicNode(ProcessingNode):
         elif bayer_pattern == BayerPattern.BGGR:
             pattern = cv2.COLOR_BayerBG2RGB_VNG
         else:
-            raise ValueError(f"不支持的Bayer模式: {bayer_pattern}")
+            raise ValueError(f"Unsupported Bayer pattern: {bayer_pattern}")
         
         rgb_data = cv2.cvtColor(raw_data, pattern)
         return rgb_data
     
     def _demosaic_edge_aware(self, raw_data: np.ndarray, bayer_pattern: BayerPattern) -> np.ndarray:
-        """边缘感知去马赛克"""
-        # 简化的边缘感知实现
-        # 首先使用双线性插值
+        """Edge-aware demosaic"""
+        # Simplified edge-aware implementation
+        # First use bilinear interpolation
         rgb_data = self._demosaic_bilinear(raw_data, bayer_pattern)
         
-        # 计算边缘强度
+        # Calculate edge strength
         gray = cv2.cvtColor(rgb_data.astype(np.uint8), cv2.COLOR_RGB2GRAY)
         edges = cv2.Sobel(gray, cv2.CV_64F, 1, 1)
         edge_strength = np.abs(edges)
         
-        # 在边缘区域增强细节
+        # Enhance details in edge regions
         edge_threshold = np.percentile(edge_strength, 90)
         edge_mask = edge_strength > edge_threshold
         
-        # 应用边缘增强
+        # Apply edge enhancement
         for c in range(3):
             channel = rgb_data[:, :, c].astype(np.float32)
             enhanced = channel * (1 + 0.1 * edge_mask)
@@ -248,56 +248,56 @@ class DemosaicNode(ProcessingNode):
         return rgb_data
     
     def _demosaic_ai(self, raw_data: np.ndarray, bayer_pattern: BayerPattern) -> np.ndarray:
-        """AI去马赛克"""
+        """AI demosaic"""
         if self._ai_model is None:
-            raise RuntimeError("AI模型未加载")
+            raise RuntimeError("AI model not loaded")
         
-        # 预处理输入数据
+        # Preprocess input data
         input_tensor = self._preprocess_for_ai(raw_data)
         
-        # 执行AI推理
+        # Execute AI inference
         try:
             output_tensor = self._ai_model(input_tensor)
             rgb_data = self._postprocess_from_ai(output_tensor)
         except Exception as e:
-            self.logger.error(f"AI推理失败: {e}")
-            # 回退到经典方法
+            self.logger.error(f"AI inference failed: {e}")
+            # Fallback to classic method
             rgb_data = self._demosaic_classic(raw_data, bayer_pattern)
         
         return rgb_data
     
     def _load_ai_model(self):
-        """加载AI模型"""
+        """Load AI model"""
         model_path = self.config["ai_model_path"]
         if not model_path:
             return
         
         try:
-            # 这里应该实现具体的AI模型加载逻辑
-            # 支持PyTorch、TensorFlow、ONNX等格式
-            self.logger.info(f"加载AI模型: {model_path}")
+            # Should implement specific AI model loading logic here
+            # Supports PyTorch, TensorFlow, ONNX, etc.
+            self.logger.info(f"Loading AI model: {model_path}")
             
-            # 占位实现
+            # Placeholder implementation
             self._ai_model = None
             
         except Exception as e:
-            self.logger.error(f"AI模型加载失败: {e}")
+            self.logger.error(f"AI model loading failed: {e}")
             self._ai_model = None
     
     def _preprocess_for_ai(self, raw_data: np.ndarray) -> np.ndarray:
-        """为AI模型预处理数据"""
-        # 归一化
+        """Preprocess data for AI model"""
+        # Normalize
         if raw_data.dtype == np.uint16:
             raw_data = raw_data.astype(np.float32) / 65535.0
         elif raw_data.dtype == np.uint8:
             raw_data = raw_data.astype(np.float32) / 255.0
         
-        # 调整尺寸
+        # Resize
         target_size = self.config["ai_model_config"]["input_size"]
         if raw_data.shape[:2] != target_size:
             raw_data = cv2.resize(raw_data, target_size)
         
-        # 添加batch维度
+        # Add batch dimension
         if len(raw_data.shape) == 2:
             raw_data = raw_data[np.newaxis, :, :, np.newaxis]
         elif len(raw_data.shape) == 3:
@@ -306,23 +306,23 @@ class DemosaicNode(ProcessingNode):
         return raw_data
     
     def _postprocess_from_ai(self, output_tensor: np.ndarray) -> np.ndarray:
-        """从AI模型后处理数据"""
-        # 移除batch维度
+        """Postprocess data from AI model"""
+        # Remove batch dimension
         if len(output_tensor.shape) == 4:
             output_tensor = output_tensor[0]
         
-        # 反归一化
+        # Denormalize
         output_tensor = np.clip(output_tensor, 0, 1)
         output_tensor = (output_tensor * 255).astype(np.uint8)
         
         return output_tensor
     
     def _interpolate_channel(self, channel: np.ndarray) -> np.ndarray:
-        """插值填充缺失的像素"""
+        """Interpolate to fill missing pixels"""
         height, width = channel.shape
         result = channel.copy()
         
-        # 水平插值
+        # Horizontal interpolation
         for y in range(height):
             for x in range(1, width - 1):
                 if result[y, x] == 0:
@@ -331,7 +331,7 @@ class DemosaicNode(ProcessingNode):
                     if left > 0 and right > 0:
                         result[y, x] = (left + right) // 2
         
-        # 垂直插值
+        # Vertical interpolation
         for y in range(1, height - 1):
             for x in range(width):
                 if result[y, x] == 0:
@@ -340,7 +340,7 @@ class DemosaicNode(ProcessingNode):
                     if top > 0 and bottom > 0:
                         result[y, x] = (top + bottom) // 2
         
-        # 对角线插值
+        # Diagonal interpolation
         for y in range(1, height - 1):
             for x in range(1, width - 1):
                 if result[y, x] == 0:
@@ -355,10 +355,10 @@ class DemosaicNode(ProcessingNode):
         return result
     
     def _enhance_quality(self, rgb_data: np.ndarray) -> np.ndarray:
-        """质量增强"""
+        """Quality enhancement"""
         enhancement_config = self.config["quality_enhancement"]
         
-        # 锐化
+        # Sharpening
         if enhancement_config["sharpening"] > 0:
             kernel = np.array([
                 [0, -enhancement_config["sharpening"], 0],
@@ -367,14 +367,14 @@ class DemosaicNode(ProcessingNode):
             ])
             rgb_data = cv2.filter2D(rgb_data, -1, kernel)
         
-        # 降噪
+        # Noise reduction
         if enhancement_config["noise_reduction"] > 0:
             rgb_data = cv2.bilateralFilter(rgb_data, 5, 50, 50)
         
         return rgb_data
     
     def _on_implementation_changed(self):
-        """实现类型改变时的回调"""
+        """Callback when implementation type changes"""
         if self.implementation == ImplementationType.AI:
             self._load_ai_model()
         else:

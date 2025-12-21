@@ -1,6 +1,6 @@
 """
-核心模块
-包含Graph引擎、节点基类、数据模型等核心功能
+Core Module
+Contains Graph engine, node base classes, data models and other core functionality
 """
 
 from .graph import Graph

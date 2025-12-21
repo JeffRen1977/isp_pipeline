@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-基本功能测试
-测试AI ISP仿真器的核心功能
+Basic Functionality Tests
+Tests core functionality of AI ISP simulator
 """
 
 import sys
 import unittest
 from pathlib import Path
 
-# 添加src目录到Python路径
+# Add src directory to Python path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from core.frame import Frame, ColorFormat, BayerPattern, CameraParams, ExposureParams, IMUData
@@ -18,10 +18,10 @@ from core.graph import Graph
 
 
 class TestFrame(unittest.TestCase):
-    """测试Frame类"""
+    """Test Frame class"""
     
     def setUp(self):
-        """测试前准备"""
+        """Set up before tests"""
         self.test_data = np.random.randint(0, 255, (100, 100), dtype=np.uint8)
         self.camera_params = CameraParams(
             focal_length=35.0,
@@ -41,7 +41,7 @@ class TestFrame(unittest.TestCase):
         )
     
     def test_frame_creation(self):
-        """测试Frame创建"""
+        """Test Frame creation"""
         frame = Frame(
             data=self.test_data,
             color_format=ColorFormat.RAW_BAYER,
@@ -60,8 +60,8 @@ class TestFrame(unittest.TestCase):
         self.assertEqual(frame.channels, 1)
     
     def test_frame_validation(self):
-        """测试Frame验证"""
-        # 测试无效的Bayer模式
+        """Test Frame validation"""
+        # Test invalid Bayer pattern
         with self.assertRaises(ValueError):
             Frame(
                 data=self.test_data,
@@ -69,7 +69,7 @@ class TestFrame(unittest.TestCase):
                 bayer_pattern=None
             )
         
-        # 测试无效的数据维度
+        # Test invalid data dimensions
         invalid_data = np.random.randint(0, 255, (100, 100, 3, 2), dtype=np.uint8)
         with self.assertRaises(ValueError):
             Frame(
@@ -79,7 +79,7 @@ class TestFrame(unittest.TestCase):
             )
     
     def test_frame_copy(self):
-        """测试Frame复制"""
+        """Test Frame copy"""
         frame = Frame(
             data=self.test_data,
             color_format=ColorFormat.RAW_BAYER,
@@ -91,16 +91,16 @@ class TestFrame(unittest.TestCase):
         self.assertEqual(frame.color_format, frame_copy.color_format)
         self.assertEqual(frame.bayer_pattern, frame_copy.bayer_pattern)
         
-        # 修改原始数据，确保复制是深拷贝
+        # Modify original data to ensure copy is deep copy
         frame.data[0, 0] = 999
         self.assertNotEqual(frame.data[0, 0], frame_copy.data[0, 0])
 
 
 class TestFlow(unittest.TestCase):
-    """测试Flow类"""
+    """Test Flow class"""
     
     def setUp(self):
-        """测试前准备"""
+        """Set up before tests"""
         self.frames = []
         for i in range(3):
             data = np.random.randint(0, 255, (100, 100), dtype=np.uint8)
@@ -113,7 +113,7 @@ class TestFlow(unittest.TestCase):
             self.frames.append(frame)
     
     def test_flow_creation(self):
-        """测试Flow创建"""
+        """Test Flow creation"""
         flow = Flow(
             frames=self.frames,
             reference_frame_idx=0
@@ -125,8 +125,8 @@ class TestFlow(unittest.TestCase):
         self.assertEqual(flow.reference_frame, self.frames[0])
     
     def test_flow_validation(self):
-        """测试Flow验证"""
-        # 测试不同尺寸的帧
+        """Test Flow validation"""
+        # Test frames of different sizes
         invalid_frame = Frame(
             data=np.random.randint(0, 255, (200, 200), dtype=np.uint8),
             color_format=ColorFormat.RAW_BAYER,
@@ -137,10 +137,10 @@ class TestFlow(unittest.TestCase):
             Flow(frames=self.frames + [invalid_frame])
     
     def test_flow_operations(self):
-        """测试Flow操作"""
+        """Test Flow operations"""
         flow = Flow(frames=self.frames)
         
-        # 测试添加帧
+        # Test adding frame
         new_frame = Frame(
             data=np.random.randint(0, 255, (100, 100), dtype=np.uint8),
             color_format=ColorFormat.RAW_BAYER,
@@ -149,37 +149,37 @@ class TestFlow(unittest.TestCase):
         flow.add_frame(new_frame)
         self.assertEqual(flow.num_frames, 4)
         
-        # 测试移除帧
+        # Test removing frame
         removed_frame = flow.remove_frame(0)
         self.assertEqual(flow.num_frames, 3)
         self.assertEqual(removed_frame, self.frames[0])
         
-        # 测试设置参考帧
+        # Test setting reference frame
         flow.set_reference_frame(1)
         self.assertEqual(flow.reference_frame_idx, 1)
         self.assertEqual(flow.reference_frame, self.frames[1])
 
 
 class TestGraph(unittest.TestCase):
-    """测试Graph类"""
+    """Test Graph class"""
     
     def setUp(self):
-        """测试前准备"""
+        """Set up before tests"""
         self.graph = Graph("test_graph")
         
-        # 创建测试节点
+        # Create test nodes
         self.input_node = InputNode("input_node")
         self.processing_node = ProcessingNode("processing_node")
         self.output_node = OutputNode("output_node")
     
     def test_graph_creation(self):
-        """测试Graph创建"""
+        """Test Graph creation"""
         self.assertEqual(self.graph.graph_id, "test_graph")
         self.assertEqual(len(self.graph.nodes), 0)
         self.assertFalse(self.graph._is_validated)
     
     def test_add_nodes(self):
-        """测试添加节点"""
+        """Test adding nodes"""
         self.assertTrue(self.graph.add_node(self.input_node))
         self.assertTrue(self.graph.add_node(self.processing_node))
         self.assertTrue(self.graph.add_node(self.output_node))
@@ -190,21 +190,21 @@ class TestGraph(unittest.TestCase):
         self.assertIn("output_node", self.graph.nodes)
     
     def test_connect_nodes(self):
-        """测试连接节点"""
+        """Test connecting nodes"""
         self.graph.add_node(self.input_node)
         self.graph.add_node(self.processing_node)
         self.graph.add_node(self.output_node)
         
-        # 连接节点
+        # Connect nodes
         self.assertTrue(self.graph.connect_nodes("input_node", "processing_node"))
         self.assertTrue(self.graph.connect_nodes("processing_node", "output_node"))
         
-        # 验证连接
+        # Validate connections
         connections = self.graph.get_connections()
         self.assertEqual(len(connections), 2)
     
     def test_graph_validation(self):
-        """测试Graph验证"""
+        """Test Graph validation"""
         self.graph.add_node(self.input_node)
         self.graph.add_node(self.processing_node)
         self.graph.add_node(self.output_node)
@@ -212,28 +212,28 @@ class TestGraph(unittest.TestCase):
         self.graph.connect_nodes("input_node", "processing_node")
         self.graph.connect_nodes("processing_node", "output_node")
         
-        # 验证Graph
+        # Validate Graph
         self.assertTrue(self.graph.validate())
         self.assertTrue(self.graph._is_validated)
     
     def test_invalid_graph(self):
-        """测试无效Graph"""
-        # 创建有环的Graph
+        """Test invalid Graph"""
+        # Create Graph with cycles
         self.graph.add_node(self.input_node)
         self.graph.add_node(self.processing_node)
         
-        # 创建环
+        # Create cycle
         self.graph.connect_nodes("input_node", "processing_node")
         self.graph.connect_nodes("processing_node", "input_node")
         
-        # 验证应该失败
+        # Validation should fail
         self.assertFalse(self.graph.validate())
 
 
 if __name__ == "__main__":
-    # 添加缺失的import
+    # Add missing imports
     import numpy as np
     import time
     
-    # 运行测试
+    # Run tests
     unittest.main()

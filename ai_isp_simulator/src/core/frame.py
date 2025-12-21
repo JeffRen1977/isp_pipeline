@@ -1,6 +1,6 @@
 """
-Frame类：统一的图像数据模型
-包含图像数据、曝光参数、相机参数、IMU数据等元数据
+Frame Class: Unified image data model
+Contains image data, exposure parameters, camera parameters, IMU data and other metadata
 """
 
 import numpy as np
@@ -10,7 +10,7 @@ from enum import Enum
 
 
 class ColorFormat(Enum):
-    """颜色格式枚举"""
+    """Color format enumeration"""
     RAW_BAYER = "raw_bayer"
     RAW_MONO = "raw_mono"
     RGB = "rgb"
@@ -19,7 +19,7 @@ class ColorFormat(Enum):
 
 
 class BayerPattern(Enum):
-    """Bayer模式枚举"""
+    """Bayer pattern enumeration"""
     RGGB = "rggb"
     GRBG = "grbg"
     GBRG = "gbrg"
@@ -28,7 +28,7 @@ class BayerPattern(Enum):
 
 @dataclass
 class CameraParams:
-    """相机参数"""
+    """Camera parameters"""
     focal_length: float = 1.0
     f_number: float = 2.8
     sensor_size: tuple = (1.0, 1.0)
@@ -46,8 +46,8 @@ class CameraParams:
 
 @dataclass
 class ExposureParams:
-    """曝光参数"""
-    exposure_time: float = 1.0/30.0  # 秒
+    """Exposure parameters"""
+    exposure_time: float = 1.0/30.0  # seconds
     iso: int = 100
     gain: float = 1.0
     exposure_bias: float = 0.0
@@ -55,7 +55,7 @@ class ExposureParams:
 
 @dataclass
 class IMUData:
-    """IMU数据"""
+    """IMU data"""
     timestamp: float = 0.0
     gyroscope: np.ndarray = field(default_factory=lambda: np.zeros(3))
     accelerometer: np.ndarray = field(default_factory=lambda: np.zeros(3))
@@ -71,7 +71,7 @@ class IMUData:
 
 
 class Frame:
-    """统一的图像帧数据模型"""
+    """Unified image frame data model"""
     
     def __init__(
         self,
@@ -85,17 +85,17 @@ class Frame:
         metadata: Optional[Dict[str, Any]] = None
     ):
         """
-        初始化Frame
+        Initialize Frame
         
         Args:
-            data: 图像数据 (H, W, C) 或 (H, W)
-            color_format: 颜色格式
-            bayer_pattern: Bayer模式（仅RAW格式需要）
-            timestamp: 时间戳
-            camera_params: 相机参数
-            exposure_params: 曝光参数
-            imu_data: IMU数据
-            metadata: 其他元数据
+            data: Image data (H, W, C) or (H, W)
+            color_format: Color format
+            bayer_pattern: Bayer pattern (only needed for RAW format)
+            timestamp: Timestamp
+            camera_params: Camera parameters
+            exposure_params: Exposure parameters
+            imu_data: IMU data
+            metadata: Other metadata
         """
         self.data = np.asarray(data)
         self.color_format = color_format
@@ -106,44 +106,44 @@ class Frame:
         self.imu_data = imu_data or IMUData()
         self.metadata = metadata or {}
         
-        # 验证数据格式
+        # Validate data format
         self._validate_data()
     
     def _validate_data(self):
-        """验证数据格式"""
+        """Validate data format"""
         if self.data.ndim not in [2, 3]:
-            raise ValueError(f"数据维度必须是2或3，当前为{self.data.ndim}")
+            raise ValueError(f"Data dimension must be 2 or 3, current is {self.data.ndim}")
         
         if self.color_format == ColorFormat.RAW_BAYER and self.bayer_pattern is None:
-            raise ValueError("RAW Bayer格式必须指定bayer_pattern")
+            raise ValueError("RAW Bayer format must specify bayer_pattern")
     
     @property
     def height(self) -> int:
-        """图像高度"""
+        """Image height"""
         return self.data.shape[0]
     
     @property
     def width(self) -> int:
-        """图像宽度"""
+        """Image width"""
         return self.data.shape[1]
     
     @property
     def channels(self) -> int:
-        """图像通道数"""
+        """Number of image channels"""
         return 1 if self.data.ndim == 2 else self.data.shape[2]
     
     @property
     def shape(self) -> tuple:
-        """图像形状"""
+        """Image shape"""
         return self.data.shape
     
     @property
     def dtype(self) -> np.dtype:
-        """数据类型"""
+        """Data type"""
         return self.data.dtype
     
     def copy(self) -> 'Frame':
-        """复制Frame"""
+        """Copy Frame"""
         return Frame(
             data=self.data.copy(),
             color_format=self.color_format,
@@ -156,7 +156,7 @@ class Frame:
         )
     
     def to_dict(self) -> Dict[str, Any]:
-        """转换为字典格式"""
+        """Convert to dictionary format"""
         return {
             'data': self.data,
             'color_format': self.color_format.value,

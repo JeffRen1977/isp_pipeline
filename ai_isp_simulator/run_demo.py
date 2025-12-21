@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-AI ISP 仿真器演示脚本
-快速测试系统功能
+AI ISP Simulator Demo Script
+Quick test of system functionality
 """
 
 import sys
 import time
 from pathlib import Path
 
-# 添加src目录到Python路径
+# Add src directory to Python path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from core.graph import Graph
@@ -18,16 +18,16 @@ from nodes.raw_processing.demosaic import DemosaicNode
 
 
 def run_simple_demo():
-    """运行简单演示"""
-    print("🚀 AI ISP 仿真器演示")
+    """Run simple demo"""
+    print("🚀 AI ISP Simulator Demo")
     print("=" * 50)
     
-    # 创建Graph
-    print("1. 创建Graph...")
+    # Create Graph
+    print("1. Creating Graph...")
     graph = Graph("demo_pipeline")
     
-    # 创建节点
-    print("2. 创建节点...")
+    # Create nodes
+    print("2. Creating nodes...")
     raw_input = RawInputNode(
         node_id="raw_input",
         config={
@@ -50,63 +50,63 @@ def run_simple_demo():
         }
     )
     
-    # 添加节点
+    # Add nodes
     graph.add_node(raw_input)
     graph.add_node(demosaic)
     
-    # 连接节点
-    print("3. 连接节点...")
+    # Connect nodes
+    print("3. Connecting nodes...")
     graph.connect_nodes("raw_input", "demosaic")
     
-    # 验证Graph
-    print("4. 验证Graph...")
+    # Validate Graph
+    print("4. Validating Graph...")
     if not graph.validate():
-        print("❌ Graph验证失败")
+        print("❌ Graph validation failed")
         return
     
-    print("✅ Graph验证通过")
+    print("✅ Graph validation passed")
     
-    # 生成测试帧
-    print("5. 生成测试帧...")
+    # Generate test frame
+    print("5. Generating test frame...")
     frame = raw_input.generate_frame()
-    print(f"   生成帧: {frame.shape}, 格式: {frame.color_format.value}")
+    print(f"   Generated frame: {frame.shape}, format: {frame.color_format.value}")
     
-    # 执行pipeline
-    print("6. 执行pipeline...")
+    # Execute pipeline
+    print("6. Executing pipeline...")
     start_time = time.time()
     
     try:
         outputs = graph.execute({"raw_input": frame})
         execution_time = time.time() - start_time
         
-        print(f"✅ Pipeline执行成功，耗时: {execution_time:.3f}s")
+        print(f"✅ Pipeline execution successful, time taken: {execution_time:.3f}s")
         
-        # 显示输出
+        # Display outputs
         for output_name, output_data in outputs.items():
             if isinstance(output_data, Frame):
-                print(f"   输出 {output_name}: {output_data.shape}, "
-                      f"格式: {output_data.color_format.value}")
+                print(f"   Output {output_name}: {output_data.shape}, "
+                      f"format: {output_data.color_format.value}")
         
-        # 性能统计
+        # Performance statistics
         stats = graph.get_performance_stats()
-        print(f"\n📊 性能统计:")
-        print(f"   总执行次数: {stats['total_executions']}")
-        print(f"   平均执行时间: {stats['avg_execution_time']:.3f}s")
+        print(f"\n📊 Performance Statistics:")
+        print(f"   Total executions: {stats['total_executions']}")
+        print(f"   Average execution time: {stats['avg_execution_time']:.3f}s")
         
     except Exception as e:
-        print(f"❌ Pipeline执行失败: {e}")
+        print(f"❌ Pipeline execution failed: {e}")
         import traceback
         traceback.print_exc()
     
-    print("\n🎉 演示完成！")
+    print("\n🎉 Demo completed!")
 
 
 if __name__ == "__main__":
     try:
         run_simple_demo()
     except KeyboardInterrupt:
-        print("\n⏹️ 用户中断")
+        print("\n⏹️ User interrupted")
     except Exception as e:
-        print(f"\n💥 程序异常: {e}")
+        print(f"\n💥 Program exception: {e}")
         import traceback
         traceback.print_exc()

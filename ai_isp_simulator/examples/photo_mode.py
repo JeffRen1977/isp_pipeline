@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-拍照模式示例
-演示如何使用AI ISP仿真器进行拍照处理
+Photo Mode Example
+Demonstrates how to use AI ISP simulator for photo processing
 """
 
 import sys
@@ -11,7 +11,7 @@ import logging
 import yaml
 from pathlib import Path
 
-# 添加src目录到Python路径
+# Add src directory to Python path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from core.graph import Graph
@@ -21,7 +21,7 @@ from nodes.raw_processing.demosaic import DemosaicNode
 
 
 def setup_logging():
-    """设置日志"""
+    """Setup logging"""
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -29,17 +29,17 @@ def setup_logging():
 
 
 def load_pipeline_config(config_path: str) -> dict:
-    """加载pipeline配置"""
+    """Load pipeline configuration"""
     with open(config_path, 'r', encoding='utf-8') as f:
         return yaml.safe_load(f)
 
 
 def create_photo_pipeline() -> Graph:
-    """创建拍照pipeline"""
-    # 创建Graph
+    """Create photo pipeline"""
+    # Create Graph
     graph = Graph("photo_pipeline")
     
-    # 创建节点
+    # Create nodes
     raw_input = RawInputNode(
         node_id="raw_input",
         config={
@@ -76,147 +76,147 @@ def create_photo_pipeline() -> Graph:
         }
     )
     
-    # 添加节点到Graph
+    # Add nodes to Graph
     graph.add_node(raw_input)
     graph.add_node(demosaic)
     
-    # 连接节点
+    # Connect nodes
     graph.connect_nodes("raw_input", "demosaic")
     
     return graph
 
 
 def run_photo_pipeline():
-    """运行拍照pipeline"""
-    print("=== AI ISP 仿真器 - 拍照模式示例 ===")
+    """Run photo pipeline"""
+    print("=== AI ISP Simulator - Photo Mode Example ===")
     
-    # 创建pipeline
+    # Create pipeline
     graph = create_photo_pipeline()
     
-    # 验证Graph
+    # Validate Graph
     if not graph.validate():
-        print("❌ Graph验证失败")
+        print("❌ Graph validation failed")
         return
     
-    print("✅ Graph验证通过")
+    print("✅ Graph validation passed")
     
-    # 生成HDR burst
-    print("\n📸 生成HDR burst序列...")
+    # Generate HDR burst
+    print("\n📸 Generating HDR burst sequence...")
     raw_input = graph.get_node("raw_input")
     
     frames = []
     for i in range(3):
         frame = raw_input.generate_frame()
         frames.append(frame)
-        print(f"  生成帧 {i+1}: {frame.shape}, ISO={frame.exposure_params.iso}, "
-              f"曝光时间={frame.exposure_params.exposure_time:.3f}s")
+        print(f"  Generated frame {i+1}: {frame.shape}, ISO={frame.exposure_params.iso}, "
+              f"exposure_time={frame.exposure_params.exposure_time:.3f}s")
     
-    # 执行pipeline
-    print("\n🔄 执行pipeline...")
+    # Execute pipeline
+    print("\n🔄 Executing pipeline...")
     start_time = time.time()
     
     try:
-        # 处理第一帧
+        # Process first frame
         outputs = graph.execute({"raw_input": frames[0]})
         execution_time = time.time() - start_time
         
-        print(f"✅ Pipeline执行成功，耗时: {execution_time:.3f}s")
+        print(f"✅ Pipeline execution successful, time taken: {execution_time:.3f}s")
         
-        # 显示结果
+        # Display results
         for output_name, output_data in outputs.items():
             if isinstance(output_data, Frame):
-                print(f"  输出 {output_name}: {output_data.shape}, "
-                      f"格式={output_data.color_format.value}")
+                print(f"  Output {output_name}: {output_data.shape}, "
+                      f"format={output_data.color_format.value}")
             else:
-                print(f"  输出 {output_name}: {type(output_data)}")
+                print(f"  Output {output_name}: {type(output_data)}")
         
-        # 性能统计
+        # Performance statistics
         stats = graph.get_performance_stats()
-        print(f"\n📊 性能统计:")
-        print(f"  总执行次数: {stats['total_executions']}")
-        print(f"  平均执行时间: {stats['avg_execution_time']:.3f}s")
-        print(f"  最小执行时间: {stats['min_execution_time']:.3f}s")
-        print(f"  最大执行时间: {stats['max_execution_time']:.3f}s")
+        print(f"\n📊 Performance Statistics:")
+        print(f"  Total executions: {stats['total_executions']}")
+        print(f"  Average execution time: {stats['avg_execution_time']:.3f}s")
+        print(f"  Minimum execution time: {stats['min_execution_time']:.3f}s")
+        print(f"  Maximum execution time: {stats['max_execution_time']:.3f}s")
         
-        # 节点性能统计
-        print(f"\n🔧 节点性能统计:")
+        # Node performance statistics
+        print(f"\n🔧 Node Performance Statistics:")
         for node_id, node in graph.nodes.items():
             node_stats = node.get_performance_stats()
-            print(f"  {node_id}: 处理{node_stats['total_processed']}次, "
-                  f"平均时间{node_stats['avg_processing_time']:.3f}s")
+            print(f"  {node_id}: processed {node_stats['total_processed']} times, "
+                  f"average time {node_stats['avg_processing_time']:.3f}s")
         
     except Exception as e:
-        print(f"❌ Pipeline执行失败: {e}")
-        logging.error(f"Pipeline执行失败: {e}", exc_info=True)
+        print(f"❌ Pipeline execution failed: {e}")
+        logging.error(f"Pipeline execution failed: {e}", exc_info=True)
     
-    # 清理
+    # Cleanup
     graph.reset()
-    print("\n🧹 清理完成")
+    print("\n🧹 Cleanup completed")
 
 
 def run_hdr_photo():
-    """运行HDR拍照"""
-    print("\n=== HDR拍照示例 ===")
+    """Run HDR photo"""
+    print("\n=== HDR Photo Example ===")
     
-    # 创建pipeline
+    # Create pipeline
     graph = create_photo_pipeline()
     
     if not graph.validate():
-        print("❌ Graph验证失败")
+        print("❌ Graph validation failed")
         return
     
-    # 生成HDR burst
+    # Generate HDR burst
     raw_input = graph.get_node("raw_input")
     frames = raw_input.generate_hdr_burst(3)
     
-    print(f"📸 生成{len(frames)}帧HDR burst")
+    print(f"📸 Generated {len(frames)} frame HDR burst")
     
-    # 处理每一帧
+    # Process each frame
     processed_frames = []
     for i, frame in enumerate(frames):
-        print(f"\n处理帧 {i+1}...")
+        print(f"\nProcessing frame {i+1}...")
         start_time = time.time()
         
         try:
             outputs = graph.execute({"raw_input": frame})
             processing_time = time.time() - start_time
             
-            # 获取处理后的帧
+            # Get processed frames
             for output_name, output_data in outputs.items():
                 if isinstance(output_data, Frame):
                     processed_frames.append(output_data)
-                    print(f"  ✅ 帧 {i+1} 处理完成，耗时: {processing_time:.3f}s")
-                    print(f"     输出尺寸: {output_data.shape}")
-                    print(f"     输出格式: {output_data.color_format.value}")
+                    print(f"  ✅ Frame {i+1} processing completed, time taken: {processing_time:.3f}s")
+                    print(f"     Output size: {output_data.shape}")
+                    print(f"     Output format: {output_data.color_format.value}")
                     break
             
         except Exception as e:
-            print(f"  ❌ 帧 {i+1} 处理失败: {e}")
+            print(f"  ❌ Frame {i+1} processing failed: {e}")
     
-    print(f"\n🎯 HDR处理完成，共处理{len(processed_frames)}帧")
+    print(f"\n🎯 HDR processing completed, processed {len(processed_frames)} frames")
     
-    # 清理
+    # Cleanup
     graph.reset()
 
 
 def main():
-    """主函数"""
+    """Main function"""
     setup_logging()
     
     try:
-        # 运行基本拍照pipeline
+        # Run basic photo pipeline
         run_photo_pipeline()
         
-        # 运行HDR拍照
+        # Run HDR photo
         run_hdr_photo()
         
-        print("\n🎉 所有示例运行完成！")
+        print("\n🎉 All examples completed!")
         
     except KeyboardInterrupt:
-        print("\n⏹️ 用户中断")
+        print("\n⏹️ User interrupted")
     except Exception as e:
-        print(f"\n💥 程序异常: {e}")
-        logging.error(f"程序异常: {e}", exc_info=True)
+        print(f"\n💥 Program exception: {e}")
+        logging.error(f"Program exception: {e}", exc_info=True)
 
 
 if __name__ == "__main__":

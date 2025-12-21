@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 """
-AI ISP 仿真器主程序
-支持拍照、视频、预览三种模式
+AI ISP Simulator Main Program
+Supports three modes: photo, video, and preview
 """
 
+import os
 import sys
-import argparse
-import logging
 import yaml
+import logging
+import argparse
 from pathlib import Path
 from typing import Dict, Any
 
-# 添加src目录到Python路径
+# Add src directory to Python path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from core.graph import Graph
@@ -21,7 +22,7 @@ from nodes.raw_processing.demosaic import DemosaicNode
 
 
 def setup_logging(level: str = "INFO"):
-    """设置日志"""
+    """Setup logging"""
     logging.basicConfig(
         level=getattr(logging, level.upper()),
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -29,24 +30,24 @@ def setup_logging(level: str = "INFO"):
 
 
 def load_config(config_path: str) -> Dict[str, Any]:
-    """加载配置文件"""
+    """Load configuration file"""
     try:
         with open(config_path, 'r', encoding='utf-8') as f:
             return yaml.safe_load(f)
     except Exception as e:
-        logging.error(f"加载配置文件失败: {e}")
+        logging.error(f"Failed to load configuration file: {e}")
         return {}
 
 
 def create_pipeline_from_config(config: Dict[str, Any]) -> Graph:
-    """根据配置创建pipeline"""
+    """Create pipeline from configuration"""
     pipeline_config = config.get("pipeline", {})
     pipeline_name = pipeline_config.get("name", "default_pipeline")
     
-    # 创建Graph
+    # Create Graph
     graph = Graph(pipeline_name)
     
-    # 创建节点
+    # Create nodes
     nodes_config = pipeline_config.get("nodes", {})
     nodes = {}
     
@@ -61,13 +62,13 @@ def create_pipeline_from_config(config: Dict[str, Any]) -> Graph:
             impl = ImplementationType(implementation)
             node = DemosaicNode(node_id, node_config_dict, impl)
         else:
-            logging.warning(f"未知的节点类型: {node_type}")
+            logging.warning(f"Unknown node type: {node_type}")
             continue
         
         nodes[node_id] = node
         graph.add_node(node)
     
-    # 连接节点
+    # Connect nodes
     connections = pipeline_config.get("connections", [])
     for connection in connections:
         from_node = connection.get("from")
@@ -84,179 +85,179 @@ def create_pipeline_from_config(config: Dict[str, Any]) -> Graph:
                 if from_node_id in nodes and to_node_id in nodes:
                     graph.connect_nodes(from_node_id, to_node_id, from_port, to_port)
                 else:
-                    logging.warning(f"连接节点失败: {from_node_id} -> {to_node_id}")
+                    logging.warning(f"Failed to connect nodes: {from_node_id} -> {to_node_id}")
     
     return graph
 
 
 def run_photo_mode(config_path: str):
-    """运行拍照模式"""
-    print("=== 拍照模式 ===")
+    """Run photo mode"""
+    print("=== Photo Mode ===")
     
-    # 加载配置
+    # Load configuration
     config = load_config(config_path)
     if not config:
-        print("❌ 配置加载失败")
+        print("❌ Configuration loading failed")
         return
     
-    # 创建pipeline
+    # Create pipeline
     graph = create_pipeline_from_config(config)
     
-    # 验证Graph
+    # Validate Graph
     if not graph.validate():
-        print("❌ Graph验证失败")
+        print("❌ Graph validation failed")
         return
     
-    print("✅ Graph验证通过")
+    print("✅ Graph validation passed")
     
-    # 获取RAW输入节点
+    # Get RAW input node
     raw_input = graph.get_node("raw_input")
     if not raw_input:
-        print("❌ 未找到RAW输入节点")
+        print("❌ RAW input node not found")
         return
     
-    # 生成测试帧
-    print("📸 生成测试帧...")
+    # Generate test frame
+    print("📸 Generating test frame...")
     frame = raw_input.generate_frame()
-    print(f"  生成帧: {frame.shape}, ISO={frame.exposure_params.iso}")
+    print(f"  Generated frame: {frame.shape}, ISO={frame.exposure_params.iso}")
     
-    # 执行pipeline
-    print("🔄 执行pipeline...")
+    # Execute pipeline
+    print("🔄 Executing pipeline...")
     try:
         outputs = graph.execute({"raw_input": frame})
-        print("✅ Pipeline执行成功")
+        print("✅ Pipeline execution successful")
         
-        # 显示输出
+        # Display outputs
         for output_name, output_data in outputs.items():
             if isinstance(output_data, Frame):
-                print(f"  输出 {output_name}: {output_data.shape}, "
-                      f"格式={output_data.color_format.value}")
+                print(f"  Output {output_name}: {output_data.shape}, "
+                      f"format={output_data.color_format.value}")
         
     except Exception as e:
-        print(f"❌ Pipeline执行失败: {e}")
-        logging.error(f"Pipeline执行失败: {e}", exc_info=True)
+        print(f"❌ Pipeline execution failed: {e}")
+        logging.error(f"Pipeline execution failed: {e}", exc_info=True)
 
 
 def run_video_mode(config_path: str):
-    """运行视频模式"""
-    print("=== 视频模式 ===")
+    """Run video mode"""
+    print("=== Video Mode ===")
     
-    # 加载配置
+    # Load configuration
     config = load_config(config_path)
     if not config:
-        print("❌ 配置加载失败")
+        print("❌ Configuration loading failed")
         return
     
-    # 创建pipeline
+    # Create pipeline
     graph = create_pipeline_from_config(config)
     
-    # 验证Graph
+    # Validate Graph
     if not graph.validate():
-        print("❌ Graph验证失败")
+        print("❌ Graph validation failed")
         return
     
-    print("✅ Graph验证通过")
+    print("✅ Graph validation passed")
     
-    # 获取RAW输入节点
+    # Get RAW input node
     raw_input = graph.get_node("raw_input")
     if not raw_input:
-        print("❌ 未找到RAW输入节点")
+        print("❌ RAW input node not found")
         return
     
-    # 生成多帧测试
-    print("📹 生成视频帧序列...")
+    # Generate multi-frame test
+    print("📹 Generating video frame sequence...")
     num_frames = 10
     
     for i in range(num_frames):
         frame = raw_input.generate_frame()
-        print(f"  生成帧 {i+1}: {frame.shape}")
+        print(f"  Generated frame {i+1}: {frame.shape}")
         
-        # 执行pipeline
+        # Execute pipeline
         try:
             outputs = graph.execute({"raw_input": frame})
-            print(f"  ✅ 帧 {i+1} 处理完成")
+            print(f"  ✅ Frame {i+1} processing completed")
             
         except Exception as e:
-            print(f"  ❌ 帧 {i+1} 处理失败: {e}")
+            print(f"  ❌ Frame {i+1} processing failed: {e}")
             break
     
-    print(f"🎬 视频处理完成，共处理{num_frames}帧")
+    print(f"🎬 Video processing completed, processed {num_frames} frames")
 
 
 def run_preview_mode(config_path: str):
-    """运行预览模式"""
-    print("=== 预览模式 ===")
+    """Run preview mode"""
+    print("=== Preview Mode ===")
     
-    # 加载配置
+    # Load configuration
     config = load_config(config_path)
     if not config:
-        print("❌ 配置加载失败")
+        print("❌ Configuration loading failed")
         return
     
-    # 创建pipeline
+    # Create pipeline
     graph = create_pipeline_from_config(config)
     
-    # 验证Graph
+    # Validate Graph
     if not graph.validate():
-        print("❌ Graph验证失败")
+        print("❌ Graph validation failed")
         return
     
-    print("✅ Graph验证通过")
+    print("✅ Graph validation passed")
     
-    # 获取RAW输入节点
+    # Get RAW input node
     raw_input = graph.get_node("raw_input")
     if not raw_input:
-        print("❌ 未找到RAW输入节点")
+        print("❌ RAW input node not found")
         return
     
-    # 生成预览帧
-    print("👁️ 生成预览帧...")
+    # Generate preview frame
+    print("👁️ Generating preview frame...")
     frame = raw_input.generate_frame()
-    print(f"  生成预览帧: {frame.shape}")
+    print(f"  Generated preview frame: {frame.shape}")
     
-    # 执行pipeline
-    print("🔄 执行预览pipeline...")
+    # Execute pipeline
+    print("🔄 Executing preview pipeline...")
     try:
         outputs = graph.execute({"raw_input": frame})
-        print("✅ 预览pipeline执行成功")
+        print("✅ Preview pipeline execution successful")
         
-        # 显示输出
+        # Display outputs
         for output_name, output_data in outputs.items():
             if isinstance(output_data, Frame):
-                print(f"  预览输出 {output_name}: {output_data.shape}, "
-                      f"格式={output_data.color_format.value}")
+                print(f"  Preview output {output_name}: {output_data.shape}, "
+                      f"format={output_data.color_format.value}")
         
     except Exception as e:
-        print(f"❌ 预览pipeline执行失败: {e}")
-        logging.error(f"预览pipeline执行失败: {e}", exc_info=True)
+        print(f"❌ Preview pipeline execution failed: {e}")
+        logging.error(f"Preview pipeline execution failed: {e}", exc_info=True)
 
 
 def main():
-    """主函数"""
-    parser = argparse.ArgumentParser(description="AI ISP 仿真器")
+    """Main function"""
+    parser = argparse.ArgumentParser(description="AI ISP Simulator")
     parser.add_argument(
         "mode",
         choices=["photo", "video", "preview"],
-        help="运行模式"
+        help="Run mode"
     )
     parser.add_argument(
         "--config",
         type=str,
-        help="配置文件路径"
+        help="Configuration file path"
     )
     parser.add_argument(
         "--log-level",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
         default="INFO",
-        help="日志级别"
+        help="Log level"
     )
     
     args = parser.parse_args()
     
-    # 设置日志
+    # Setup logging
     setup_logging(args.log_level)
     
-    # 确定配置文件路径
+    # Determine configuration file path
     if args.config:
         config_path = args.config
     else:
@@ -268,15 +269,15 @@ def main():
         else:  # preview
             config_path = config_dir / "preview_mode.yaml"
     
-    # 检查配置文件是否存在
+    # Check if configuration file exists
     if not Path(config_path).exists():
-        print(f"❌ 配置文件不存在: {config_path}")
+        print(f"❌ Configuration file does not exist: {config_path}")
         return
     
-    print(f"📁 使用配置文件: {config_path}")
+    print(f"📁 Using configuration file: {config_path}")
     
     try:
-        # 根据模式运行
+        # Run according to mode
         if args.mode == "photo":
             run_photo_mode(config_path)
         elif args.mode == "video":
@@ -284,17 +285,17 @@ def main():
         elif args.mode == "preview":
             run_preview_mode(config_path)
         
-        print("\n🎉 运行完成！")
+        print("\n🎉 Execution completed!")
         
     except KeyboardInterrupt:
-        print("\n⏹️ 用户中断")
+        print("\n⏹️ User interrupted")
     except Exception as e:
-        print(f"\n💥 程序异常: {e}")
-        logging.error(f"程序异常: {e}", exc_info=True)
+        print(f"\n💥 Program exception: {e}")
+        logging.error(f"Program exception: {e}", exc_info=True)
 
 
 if __name__ == "__main__":
-    # 添加缺失的import
+    # Add missing import
     from core.node import ImplementationType
     
     main()

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-AI ISP 仿真器高级演示脚本
-展示完整的pipeline和多种节点
+AI ISP Simulator Advanced Demo Script
+Demonstrates complete pipeline and multiple nodes
 """
 
 import sys
@@ -9,7 +9,7 @@ import time
 import logging
 from pathlib import Path
 
-# 添加src目录到Python路径
+# Add src directory to Python path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from core.graph import Graph
@@ -21,7 +21,7 @@ from nodes.rgb_processing.awb import AWBNode
 
 
 def setup_logging():
-    """设置日志"""
+    """Setup logging"""
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -29,14 +29,14 @@ def setup_logging():
 
 
 def create_advanced_pipeline() -> Graph:
-    """创建高级pipeline"""
-    print("🔧 创建高级pipeline...")
+    """Create advanced pipeline"""
+    print("🔧 Creating advanced pipeline...")
     
-    # 创建Graph
+    # Create Graph
     graph = Graph("advanced_isp_pipeline")
     
-    # 创建节点
-    print("  创建RAW输入节点...")
+    # Create nodes
+    print("  Creating RAW input node...")
     raw_input = RawInputNode(
         node_id="raw_input",
         config={
@@ -59,7 +59,7 @@ def create_advanced_pipeline() -> Graph:
         }
     )
     
-    print("  创建RAW预处理节点...")
+    print("  Creating RAW preprocessing node...")
     raw_preproc = RawPreprocNode(
         node_id="raw_preproc",
         implementation="classic",
@@ -82,7 +82,7 @@ def create_advanced_pipeline() -> Graph:
         }
     )
     
-    print("  创建去马赛克节点...")
+    print("  Creating demosaic node...")
     demosaic = DemosaicNode(
         node_id="demosaic",
         implementation="classic",
@@ -96,7 +96,7 @@ def create_advanced_pipeline() -> Graph:
         }
     )
     
-    print("  创建白平衡节点...")
+    print("  Creating white balance node...")
     awb = AWBNode(
         node_id="awb",
         implementation="classic",
@@ -112,15 +112,15 @@ def create_advanced_pipeline() -> Graph:
         }
     )
     
-    # 添加节点到Graph
-    print("  添加节点到Graph...")
+    # Add nodes to Graph
+    print("  Adding nodes to Graph...")
     graph.add_node(raw_input)
     graph.add_node(raw_preproc)
     graph.add_node(demosaic)
     graph.add_node(awb)
     
-    # 连接节点
-    print("  连接节点...")
+    # Connect nodes
+    print("  Connecting nodes...")
     graph.connect_nodes("raw_input", "raw_preproc")
     graph.connect_nodes("raw_preproc", "demosaic")
     graph.connect_nodes("demosaic", "awb")
@@ -129,34 +129,34 @@ def create_advanced_pipeline() -> Graph:
 
 
 def run_pipeline_test(graph: Graph, test_name: str, num_frames: int = 1):
-    """运行pipeline测试"""
-    print(f"\n🧪 运行测试: {test_name}")
+    """Run pipeline test"""
+    print(f"\n🧪 Running test: {test_name}")
     print("=" * 50)
     
-    # 验证Graph
+    # Validate Graph
     if not graph.validate():
-        print("❌ Graph验证失败")
+        print("❌ Graph validation failed")
         return False
     
-    print("✅ Graph验证通过")
+    print("✅ Graph validation passed")
     
-    # 获取RAW输入节点
+    # Get RAW input node
     raw_input = graph.get_node("raw_input")
     if not raw_input:
-        print("❌ 未找到RAW输入节点")
+        print("❌ RAW input node not found")
         return False
     
-    # 生成测试帧
-    print(f"📸 生成{num_frames}帧测试数据...")
+    # Generate test frames
+    print(f"📸 Generating {num_frames} test frames...")
     frames = []
     for i in range(num_frames):
         frame = raw_input.generate_frame()
         frames.append(frame)
-        print(f"  帧 {i+1}: {frame.shape}, ISO={frame.exposure_params.iso}, "
-              f"曝光时间={frame.exposure_params.exposure_time:.3f}s")
+        print(f"  Frame {i+1}: {frame.shape}, ISO={frame.exposure_params.iso}, "
+              f"exposure_time={frame.exposure_params.exposure_time:.3f}s")
     
-    # 执行pipeline
-    print("🔄 执行pipeline...")
+    # Execute pipeline
+    print("🔄 Executing pipeline...")
     start_time = time.time()
     
     processed_frames = []
@@ -167,80 +167,80 @@ def run_pipeline_test(graph: Graph, test_name: str, num_frames: int = 1):
             outputs = graph.execute({"raw_input": frame})
             frame_processing_time = time.time() - frame_start_time
             
-            # 获取处理后的帧
+            # Get processed frames
             for output_name, output_data in outputs.items():
                 if isinstance(output_data, Frame):
                     processed_frames.append(output_data)
-                    print(f"  ✅ 帧 {i+1} 处理完成，耗时: {frame_processing_time:.3f}s")
-                    print(f"     输出 {output_name}: {output_data.shape}, "
-                          f"格式={output_data.color_format.value}")
+                    print(f"  ✅ Frame {i+1} processing completed, time taken: {frame_processing_time:.3f}s")
+                    print(f"     Output {output_name}: {output_data.shape}, "
+                          f"format={output_data.color_format.value}")
                     break
             
         except Exception as e:
-            print(f"  ❌ 帧 {i+1} 处理失败: {e}")
-            logging.error(f"帧 {i+1} 处理失败: {e}", exc_info=True)
+            print(f"  ❌ Frame {i+1} processing failed: {e}")
+            logging.error(f"Frame {i+1} processing failed: {e}", exc_info=True)
             return False
     
     total_time = time.time() - start_time
-    print(f"✅ Pipeline执行完成，总耗时: {total_time:.3f}s")
+    print(f"✅ Pipeline execution completed, total time: {total_time:.3f}s")
     
     return True
 
 
 def run_performance_analysis(graph: Graph):
-    """运行性能分析"""
-    print(f"\n📊 性能分析")
+    """Run performance analysis"""
+    print(f"\n📊 Performance Analysis")
     print("=" * 50)
     
-    # Graph性能统计
+    # Graph performance statistics
     graph_stats = graph.get_performance_stats()
-    print("Graph性能统计:")
-    print(f"  总执行次数: {graph_stats['total_executions']}")
-    print(f"  平均执行时间: {graph_stats['avg_execution_time']:.3f}s")
-    print(f"  最小执行时间: {graph_stats['min_execution_time']:.3f}s")
-    print(f"  最大执行时间: {graph_stats['max_execution_time']:.3f}s")
+    print("Graph Performance Statistics:")
+    print(f"  Total executions: {graph_stats['total_executions']}")
+    print(f"  Average execution time: {graph_stats['avg_execution_time']:.3f}s")
+    print(f"  Minimum execution time: {graph_stats['min_execution_time']:.3f}s")
+    print(f"  Maximum execution time: {graph_stats['max_execution_time']:.3f}s")
     if 'std_execution_time' in graph_stats:
-        print(f"  标准差: {graph_stats['std_execution_time']:.3f}s")
+        print(f"  Standard deviation: {graph_stats['std_execution_time']:.3f}s")
     
-    # 节点性能统计
-    print("\n节点性能统计:")
+    # Node performance statistics
+    print("\nNode Performance Statistics:")
     for node_id, node in graph.nodes.items():
         node_stats = node.get_performance_stats()
         print(f"  {node_id}:")
-        print(f"    处理次数: {node_stats['total_processed']}")
-        print(f"    平均时间: {node_stats['avg_processing_time']:.3f}s")
-        print(f"    最小时间: {node_stats['min_processing_time']:.3f}s")
-        print(f"    最大时间: {node_stats['max_processing_time']:.3f}s")
+        print(f"    Processing count: {node_stats['total_processed']}")
+        print(f"    Average time: {node_stats['avg_processing_time']:.3f}s")
+        print(f"    Minimum time: {node_stats['min_processing_time']:.3f}s")
+        print(f"    Maximum time: {node_stats['max_processing_time']:.3f}s")
         if 'std_processing_time' in node_stats:
-            print(f"    标准差: {node_stats['std_processing_time']:.3f}s")
+            print(f"    Standard deviation: {node_stats['std_processing_time']:.3f}s")
 
 
 def run_implementation_comparison(graph: Graph):
-    """运行实现方式对比"""
-    print(f"\n🔄 实现方式对比")
+    """Run implementation comparison"""
+    print(f"\n🔄 Implementation Comparison")
     print("=" * 50)
     
-    # 获取去马赛克节点
+    # Get demosaic node
     demosaic_node = graph.get_node("demosaic")
     if not demosaic_node:
-        print("❌ 未找到去马赛克节点")
+        print("❌ Demosaic node not found")
         return
     
-    # 生成测试帧
+    # Generate test frame
     raw_input = graph.get_node("raw_input")
     test_frame = raw_input.generate_frame()
     
-    # 测试经典实现
-    print("测试经典实现...")
+    # Test classic implementation
+    print("Testing classic implementation...")
     demosaic_node.set_implementation("classic")
     start_time = time.time()
     
     try:
         outputs = graph.execute({"raw_input": test_frame})
         classic_time = time.time() - start_time
-        print(f"  ✅ 经典实现完成，耗时: {classic_time:.3f}s")
+        print(f"  ✅ Classic implementation completed, time taken: {classic_time:.3f}s")
         
-        # 获取输出
+        # Get output
         classic_output = None
         for output_name, output_data in outputs.items():
             if isinstance(output_data, Frame):
@@ -248,20 +248,20 @@ def run_implementation_comparison(graph: Graph):
                 break
         
     except Exception as e:
-        print(f"  ❌ 经典实现失败: {e}")
+        print(f"  ❌ Classic implementation failed: {e}")
         return
     
-    # 测试AI实现（如果可用）
-    print("测试AI实现...")
+    # Test AI implementation (if available)
+    print("Testing AI implementation...")
     demosaic_node.set_implementation("ai")
     start_time = time.time()
     
     try:
         outputs = graph.execute({"raw_input": test_frame})
         ai_time = time.time() - start_time
-        print(f"  ✅ AI实现完成，耗时: {ai_time:.3f}s")
+        print(f"  ✅ AI implementation completed, time taken: {ai_time:.3f}s")
         
-        # 获取输出
+        # Get output
         ai_output = None
         for output_name, output_data in outputs.items():
             if isinstance(output_data, Frame):
@@ -269,58 +269,58 @@ def run_implementation_comparison(graph: Graph):
                 break
         
     except Exception as e:
-        print(f"  ❌ AI实现失败: {e}")
+        print(f"  ❌ AI implementation failed: {e}")
         ai_time = float('inf')
         ai_output = None
     
-    # 对比结果
-    print("\n对比结果:")
+    # Comparison results
+    print("\nComparison Results:")
     if classic_output and ai_output:
-        print(f"  经典实现: {classic_output.shape}, 耗时: {classic_time:.3f}s")
-        print(f"  AI实现: {ai_output.shape}, 耗时: {ai_time:.3f}s")
+        print(f"  Classic implementation: {classic_output.shape}, time: {classic_time:.3f}s")
+        print(f"  AI implementation: {ai_output.shape}, time: {ai_time:.3f}s")
         
         if ai_time < float('inf'):
             speedup = classic_time / ai_time
-            print(f"  加速比: {speedup:.2f}x")
+            print(f"  Speedup: {speedup:.2f}x")
         else:
-            print("  AI实现不可用")
+            print("  AI implementation not available")
     else:
-        print("  无法获取输出进行对比")
+        print("  Unable to get outputs for comparison")
 
 
 def main():
-    """主函数"""
+    """Main function"""
     setup_logging()
     
     try:
-        print("🚀 AI ISP 仿真器高级演示")
+        print("🚀 AI ISP Simulator Advanced Demo")
         print("=" * 60)
         
-        # 创建pipeline
+        # Create pipeline
         graph = create_advanced_pipeline()
         
-        # 运行基本测试
-        if not run_pipeline_test(graph, "基本功能测试", 3):
-            print("❌ 基本测试失败")
+        # Run basic test
+        if not run_pipeline_test(graph, "Basic Functionality Test", 3):
+            print("❌ Basic test failed")
             return
         
-        # 运行性能分析
+        # Run performance analysis
         run_performance_analysis(graph)
         
-        # 运行实现方式对比
+        # Run implementation comparison
         run_implementation_comparison(graph)
         
-        # 清理
+        # Cleanup
         graph.reset()
-        print("\n🧹 清理完成")
+        print("\n🧹 Cleanup completed")
         
-        print("\n🎉 高级演示完成！")
+        print("\n🎉 Advanced demo completed!")
         
     except KeyboardInterrupt:
-        print("\n⏹️ 用户中断")
+        print("\n⏹️ User interrupted")
     except Exception as e:
-        print(f"\n💥 程序异常: {e}")
-        logging.error(f"程序异常: {e}", exc_info=True)
+        print(f"\n💥 Program exception: {e}")
+        logging.error(f"Program exception: {e}", exc_info=True)
 
 
 if __name__ == "__main__":

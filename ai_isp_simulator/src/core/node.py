@@ -1,6 +1,6 @@
 """
-节点基类：定义所有ISP节点的通用接口
-支持AI/传统实现切换，统一的I/O格式
+Node Base Class: Defines common interface for all ISP nodes
+Supports AI/traditional implementation switching, unified I/O format
 """
 
 import numpy as np
@@ -12,21 +12,21 @@ from .flow import Flow
 
 
 class NodeType(Enum):
-    """节点类型枚举"""
+    """Node type enumeration"""
     INPUT = "input"
     PROCESSING = "processing"
     OUTPUT = "output"
 
 
 class ImplementationType(Enum):
-    """实现类型枚举"""
-    CLASSIC = "classic"  # 传统算法
-    AI = "ai"           # AI算法
-    HYBRID = "hybrid"   # 混合实现
+    """Implementation type enumeration"""
+    CLASSIC = "classic"  # Traditional algorithm
+    AI = "ai"           # AI algorithm
+    HYBRID = "hybrid"   # Hybrid implementation
 
 
 class NodeStatus(Enum):
-    """节点状态枚举"""
+    """Node status enumeration"""
     IDLE = "idle"
     PROCESSING = "processing"
     ERROR = "error"
@@ -34,7 +34,7 @@ class NodeStatus(Enum):
 
 
 class Node(ABC):
-    """ISP节点基类"""
+    """ISP node base class"""
     
     def __init__(
         self,
@@ -45,14 +45,14 @@ class Node(ABC):
         enabled: bool = True
     ):
         """
-        初始化节点
+        Initialize node
         
         Args:
-            node_id: 节点唯一标识
-            node_type: 节点类型
-            implementation: 实现类型
-            config: 配置参数
-            enabled: 是否启用
+            node_id: Node unique identifier
+            node_type: Node type
+            implementation: Implementation type
+            config: Configuration parameters
+            enabled: Whether enabled
         """
         self.node_id = node_id
         self.node_type = node_type
@@ -62,43 +62,43 @@ class Node(ABC):
         self.status = NodeStatus.IDLE
         self.error_message = ""
         
-        # 输入输出端口
+        # Input/output ports
         self.input_ports: List[str] = []
         self.output_ports: List[str] = []
         
-        # 性能统计
+        # Performance statistics
         self.processing_times: List[float] = []
         self.total_processed = 0
         
-        # 验证配置
+        # Validate configuration
         self._validate_config()
     
     def _validate_config(self):
-        """验证配置参数"""
+        """Validate configuration parameters"""
         pass
     
     @abstractmethod
     def process(self, inputs: Dict[str, Union[Frame, Flow, np.ndarray]]) -> Dict[str, Union[Frame, Flow, np.ndarray]]:
         """
-        处理输入数据
+        Process input data
         
         Args:
-            inputs: 输入数据字典，键为端口名，值为数据
+            inputs: Input data dictionary, keys are port names, values are data
             
         Returns:
-            输出数据字典，键为端口名，值为数据
+            Output data dictionary, keys are port names, values are data
         """
         pass
     
     def process_frame(self, frame: Frame) -> Frame:
         """
-        处理单个Frame（便捷方法）
+        Process single Frame (convenience method)
         
         Args:
-            frame: 输入Frame
+            frame: Input Frame
             
         Returns:
-            输出Frame
+            Output Frame
         """
         inputs = {"input": frame}
         outputs = self.process(inputs)
@@ -106,55 +106,55 @@ class Node(ABC):
     
     def process_flow(self, flow: Flow) -> Flow:
         """
-        处理Flow（便捷方法）
+        Process Flow (convenience method)
         
         Args:
-            flow: 输入Flow
+            flow: Input Flow
             
         Returns:
-            输出Flow
+            Output Flow
         """
         inputs = {"input": flow}
         outputs = self.process(inputs)
         return outputs.get("output", flow)
     
     def set_config(self, config: Dict[str, Any]):
-        """设置配置参数"""
+        """Set configuration parameters"""
         self.config.update(config)
         self._validate_config()
     
     def get_config(self) -> Dict[str, Any]:
-        """获取配置参数"""
+        """Get configuration parameters"""
         return self.config.copy()
     
     def set_implementation(self, implementation: ImplementationType):
-        """设置实现类型"""
+        """Set implementation type"""
         self.implementation = implementation
         self._on_implementation_changed()
     
     def _on_implementation_changed(self):
-        """实现类型改变时的回调"""
+        """Callback when implementation type changes"""
         pass
     
     def enable(self):
-        """启用节点"""
+        """Enable node"""
         self.enabled = True
         self.status = NodeStatus.IDLE
     
     def disable(self):
-        """禁用节点"""
+        """Disable node"""
         self.enabled = False
         self.status = NodeStatus.DISABLED
     
     def reset(self):
-        """重置节点状态"""
+        """Reset node state"""
         self.status = NodeStatus.IDLE
         self.error_message = ""
         self.processing_times.clear()
         self.total_processed = 0
     
     def get_performance_stats(self) -> Dict[str, Any]:
-        """获取性能统计"""
+        """Get performance statistics"""
         if not self.processing_times:
             return {
                 "total_processed": self.total_processed,
@@ -172,44 +172,44 @@ class Node(ABC):
         }
     
     def _record_processing_time(self, start_time: float, end_time: float):
-        """记录处理时间"""
+        """Record processing time"""
         processing_time = end_time - start_time
         self.processing_times.append(processing_time)
         self.total_processed += 1
         
-        # 保持最近100次的记录
+        # Keep only the most recent 100 records
         if len(self.processing_times) > 100:
             self.processing_times.pop(0)
     
     def _set_error(self, error_message: str):
-        """设置错误状态"""
+        """Set error state"""
         self.status = NodeStatus.ERROR
         self.error_message = error_message
     
     def _clear_error(self):
-        """清除错误状态"""
+        """Clear error state"""
         if self.status == NodeStatus.ERROR:
             self.status = NodeStatus.IDLE
             self.error_message = ""
     
     def is_ready(self) -> bool:
-        """检查节点是否准备就绪"""
+        """Check if node is ready"""
         return self.enabled and self.status != NodeStatus.ERROR
     
     def get_input_ports(self) -> List[str]:
-        """获取输入端口列表"""
+        """Get input port list"""
         return self.input_ports.copy()
     
     def get_output_ports(self) -> List[str]:
-        """获取输出端口列表"""
+        """Get output port list"""
         return self.output_ports.copy()
     
     def has_input_port(self, port_name: str) -> bool:
-        """检查是否有指定输入端口"""
+        """Check if has specified input port"""
         return port_name in self.input_ports
     
     def has_output_port(self, port_name: str) -> bool:
-        """检查是否有指定输出端口"""
+        """Check if has specified output port"""
         return port_name in self.output_ports
     
     def __repr__(self) -> str:
@@ -220,7 +220,7 @@ class Node(ABC):
 
 
 class ProcessingNode(Node):
-    """处理节点基类"""
+    """Processing node base class"""
     
     def __init__(
         self,
@@ -237,22 +237,22 @@ class ProcessingNode(Node):
             enabled=enabled
         )
         
-        # 默认输入输出端口
+        # Default input/output ports
         self.input_ports = ["input"]
         self.output_ports = ["output"]
     
     def process(self, inputs: Dict[str, Union[Frame, Flow, np.ndarray]]) -> Dict[str, Union[Frame, Flow, np.ndarray]]:
-        """处理输入数据"""
+        """Process input data"""
         import time
         
         if not self.is_ready():
-            raise RuntimeError(f"节点{self.node_id}未准备就绪: {self.status.value}")
+            raise RuntimeError(f"Node {self.node_id} is not ready: {self.status.value}")
         
         start_time = time.time()
         self.status = NodeStatus.PROCESSING
         
         try:
-            # 根据实现类型选择处理方法
+            # Select processing method based on implementation type
             if self.implementation == ImplementationType.CLASSIC:
                 result = self._process_classic(inputs)
             elif self.implementation == ImplementationType.AI:
@@ -260,7 +260,7 @@ class ProcessingNode(Node):
             elif self.implementation == ImplementationType.HYBRID:
                 result = self._process_hybrid(inputs)
             else:
-                raise ValueError(f"不支持的实现类型: {self.implementation}")
+                raise ValueError(f"Unsupported implementation type: {self.implementation}")
             
             self._clear_error()
             self.status = NodeStatus.IDLE
@@ -276,21 +276,21 @@ class ProcessingNode(Node):
     
     @abstractmethod
     def _process_classic(self, inputs: Dict[str, Union[Frame, Flow, np.ndarray]]) -> Dict[str, Union[Frame, Flow, np.ndarray]]:
-        """传统算法实现"""
+        """Traditional algorithm implementation"""
         pass
     
     @abstractmethod
     def _process_ai(self, inputs: Dict[str, Union[Frame, Flow, np.ndarray]]) -> Dict[str, Union[Frame, Flow, np.ndarray]]:
-        """AI算法实现"""
+        """AI algorithm implementation"""
         pass
     
     def _process_hybrid(self, inputs: Dict[str, Union[Frame, Flow, np.ndarray]]) -> Dict[str, Union[Frame, Flow, np.ndarray]]:
-        """混合实现（默认使用AI）"""
+        """Hybrid implementation (default uses AI)"""
         return self._process_ai(inputs)
 
 
 class InputNode(Node):
-    """输入节点基类"""
+    """Input node base class"""
     
     def __init__(
         self,
@@ -309,12 +309,12 @@ class InputNode(Node):
         self.output_ports = ["output"]
     
     def process(self, inputs: Dict[str, Union[Frame, Flow, np.ndarray]]) -> Dict[str, Union[Frame, Flow, np.ndarray]]:
-        """输入节点不需要输入数据"""
-        raise NotImplementedError("输入节点不需要process方法")
+        """Input nodes do not require input data"""
+        raise NotImplementedError("Input nodes do not need process method")
 
 
 class OutputNode(Node):
-    """输出节点基类"""
+    """Output node base class"""
     
     def __init__(
         self,
@@ -333,5 +333,5 @@ class OutputNode(Node):
         self.input_ports = ["input"]
     
     def process(self, inputs: Dict[str, Union[Frame, Flow, np.ndarray]]) -> Dict[str, Union[Frame, Flow, np.ndarray]]:
-        """输出节点通常不产生输出数据"""
+        """Output nodes typically do not produce output data"""
         return {}

@@ -1,6 +1,6 @@
 """
-Graph引擎：实现有向图的数据流处理
-支持动态配置、节点管理、数据流控制等
+Graph Engine: Implements directed graph data flow processing
+Supports dynamic configuration, node management, data flow control, etc.
 """
 
 import time
@@ -13,140 +13,140 @@ from .flow import Flow
 
 
 class Graph:
-    """ISP Graph引擎"""
+    """ISP Graph Engine"""
     
     def __init__(self, graph_id: str):
         """
-        初始化Graph
+        Initialize Graph
         
         Args:
-            graph_id: Graph唯一标识
+            graph_id: Graph unique identifier
         """
         self.graph_id = graph_id
         
-        # 节点管理
+        # Node management
         self.nodes: Dict[str, Node] = {}
-        self.node_order: List[str] = []  # 拓扑排序后的节点顺序
+        self.node_order: List[str] = []  # Node order after topological sort
         
-        # 连接管理
-        self.connections: Dict[str, List[str]] = defaultdict(list)  # 输出 -> 输入节点列表
-        self.reverse_connections: Dict[str, List[str]] = defaultdict(list)  # 输入 -> 输出节点列表
+        # Connection management
+        self.connections: Dict[str, List[str]] = defaultdict(list)  # output -> input node list
+        self.reverse_connections: Dict[str, List[str]] = defaultdict(list)  # input -> output node list
         
-        # 数据缓存
+        # Data cache
         self.data_cache: Dict[str, Dict[str, Union[Frame, Flow, Any]]] = {}
         
-        # 性能统计
+        # Performance statistics
         self.execution_times: List[float] = []
         self.total_executions = 0
         
-        # 日志
+        # Logging
         self.logger = logging.getLogger(f"Graph_{graph_id}")
         
-        # 验证状态
+        # Validation status
         self._is_validated = False
     
     def add_node(self, node: Node) -> bool:
         """
-        添加节点
+        Add node
         
         Args:
-            node: 要添加的节点
+            node: Node to add
             
         Returns:
-            是否添加成功
+            Whether addition was successful
         """
         if node.node_id in self.nodes:
-            self.logger.warning(f"节点{node.node_id}已存在")
+            self.logger.warning(f"Node {node.node_id} already exists")
             return False
         
         self.nodes[node.node_id] = node
         self.node_order.append(node.node_id)
         self._is_validated = False
         
-        self.logger.info(f"添加节点: {node.node_id}")
+        self.logger.info(f"Added node: {node.node_id}")
         return True
     
     def remove_node(self, node_id: str) -> bool:
         """
-        移除节点
+        Remove node
         
         Args:
-            node_id: 要移除的节点ID
+            node_id: Node ID to remove
             
         Returns:
-            是否移除成功
+            Whether removal was successful
         """
         if node_id not in self.nodes:
-            self.logger.warning(f"节点{node_id}不存在")
+            self.logger.warning(f"Node {node_id} does not exist")
             return False
         
-        # 移除相关连接
+        # Remove related connections
         self._remove_node_connections(node_id)
         
-        # 移除节点
+        # Remove node
         del self.nodes[node_id]
         if node_id in self.node_order:
             self.node_order.remove(node_id)
         
-        # 清除缓存
+        # Clear cache
         if node_id in self.data_cache:
             del self.data_cache[node_id]
         
         self._is_validated = False
         
-        self.logger.info(f"移除节点: {node_id}")
+        self.logger.info(f"Removed node: {node_id}")
         return True
     
     def connect_nodes(self, from_node_id: str, to_node_id: str, from_port: str = "output", to_port: str = "input") -> bool:
         """
-        连接两个节点
+        Connect two nodes
         
         Args:
-            from_node_id: 源节点ID
-            to_node_id: 目标节点ID
-            from_port: 源节点输出端口
-            to_port: 目标节点输入端口
+            from_node_id: Source node ID
+            to_node_id: Target node ID
+            from_port: Source node output port
+            to_port: Target node input port
             
         Returns:
-            是否连接成功
+            Whether connection was successful
         """
         if from_node_id not in self.nodes or to_node_id not in self.nodes:
-            self.logger.error(f"节点不存在: {from_node_id} -> {to_node_id}")
+            self.logger.error(f"Node does not exist: {from_node_id} -> {to_node_id}")
             return False
         
         from_node = self.nodes[from_node_id]
         to_node = self.nodes[to_node_id]
         
         if not from_node.has_output_port(from_port):
-            self.logger.error(f"源节点{from_node_id}没有输出端口{from_port}")
+            self.logger.error(f"Source node {from_node_id} does not have output port {from_port}")
             return False
         
         if not to_node.has_input_port(to_port):
-            self.logger.error(f"目标节点{to_node_id}没有输入端口{to_port}")
+            self.logger.error(f"Target node {to_node_id} does not have input port {to_port}")
             return False
         
-        # 建立连接
+        # Establish connection
         connection_key = f"{from_node_id}:{from_port}"
         self.connections[connection_key].append(f"{to_node_id}:{to_port}")
         self.reverse_connections[f"{to_node_id}:{to_port}"].append(connection_key)
         
         self._is_validated = False
         
-        self.logger.info(f"连接节点: {from_node_id}:{from_port} -> {to_node_id}:{to_port}")
+        self.logger.info(f"Connected nodes: {from_node_id}:{from_port} -> {to_node_id}:{to_port}")
         return True
     
     def disconnect_nodes(self, from_node_id: str, to_node_id: str, from_port: str = "output", to_port: str = "input") -> bool:
         """
-        断开两个节点的连接
+        Disconnect two nodes
         
         Args:
-            from_node_id: 源节点ID
-            to_node_id: 目标节点ID
-            from_port: 源节点输出端口
-            to_port: 目标节点输入端口
+            from_node_id: Source node ID
+            to_node_id: Target node ID
+            from_port: Source node output port
+            to_port: Target node input port
             
         Returns:
-            是否断开成功
+            Whether disconnection was successful
         """
         connection_key = f"{from_node_id}:{from_port}"
         target_key = f"{to_node_id}:{to_port}"
@@ -157,49 +157,49 @@ class Graph:
                 self.reverse_connections[target_key].remove(connection_key)
             
             self._is_validated = False
-            self.logger.info(f"断开连接: {from_node_id}:{from_port} -> {to_node_id}:{to_port}")
+            self.logger.info(f"Disconnected nodes: {from_node_id}:{from_port} -> {to_node_id}:{to_port}")
             return True
         
         return False
     
     def validate(self) -> bool:
         """
-        验证Graph的有效性
+        Validate Graph validity
         
         Returns:
-            是否有效
+            Whether valid
         """
         try:
-            # 检查是否有环
+            # Check for cycles
             if self._has_cycle():
-                self.logger.error("Graph中存在环")
+                self.logger.error("Graph contains cycles")
                 return False
             
-            # 检查输入输出节点
+            # Check input and output nodes
             input_nodes = [n for n in self.nodes.values() if n.node_type == NodeType.INPUT]
             output_nodes = [n for n in self.nodes.values() if n.node_type == NodeType.OUTPUT]
             
             if not input_nodes:
-                self.logger.error("Graph中没有输入节点")
+                self.logger.error("Graph has no input nodes")
                 return False
             
             if not output_nodes:
-                self.logger.error("Graph中没有输出节点")
+                self.logger.error("Graph has no output nodes")
                 return False
             
-            # 拓扑排序
+            # Topological sort
             self._topological_sort()
             
             self._is_validated = True
-            self.logger.info("Graph验证通过")
+            self.logger.info("Graph validation passed")
             return True
             
         except Exception as e:
-            self.logger.error(f"Graph验证失败: {e}")
+            self.logger.error(f"Graph validation failed: {e}")
             return False
     
     def _has_cycle(self) -> bool:
-        """检查是否有环（使用DFS）"""
+        """Check for cycles (using DFS)"""
         visited = set()
         rec_stack = set()
         
@@ -212,7 +212,7 @@ class Graph:
             visited.add(node_id)
             rec_stack.add(node_id)
             
-            # 检查所有输出连接
+            # Check all output connections
             for port in self.nodes[node_id].get_output_ports():
                 connection_key = f"{node_id}:{port}"
                 for target in self.connections.get(connection_key, []):
@@ -231,10 +231,10 @@ class Graph:
         return False
     
     def _topological_sort(self):
-        """拓扑排序"""
+        """Topological sort"""
         in_degree = defaultdict(int)
         
-        # 计算入度
+        # Calculate in-degree
         for node_id in self.nodes:
             for port in self.nodes[node_id].get_input_ports():
                 target_key = f"{node_id}:{port}"
@@ -242,7 +242,7 @@ class Graph:
                     source_node_id = source.split(":")[0]
                     in_degree[node_id] += 1
         
-        # 拓扑排序
+        # Topological sort
         queue = deque([node_id for node_id in self.nodes if in_degree[node_id] == 0])
         sorted_nodes = []
         
@@ -259,80 +259,86 @@ class Graph:
                         queue.append(target_node_id)
         
         if len(sorted_nodes) != len(self.nodes):
-            raise ValueError("Graph中存在环，无法进行拓扑排序")
+            raise ValueError("Graph contains cycles, cannot perform topological sort")
         
         self.node_order = sorted_nodes
     
     def execute(self, inputs: Optional[Dict[str, Union[Frame, Flow, Any]]] = None) -> Dict[str, Union[Frame, Flow, Any]]:
         """
-        执行Graph
+        Execute Graph
         
         Args:
-            inputs: 输入数据字典
+            inputs: Input data dictionary
             
         Returns:
-            输出数据字典
+            Output data dictionary
         """
         if not self._is_validated:
             if not self.validate():
-                raise RuntimeError("Graph验证失败，无法执行")
+                raise RuntimeError("Graph validation failed, cannot execute")
         
         start_time = time.time()
         self.total_executions += 1
         
         try:
-            # 初始化数据缓存
+            # Initialize data cache
             self.data_cache.clear()
             if inputs:
                 self.data_cache.update(inputs)
             
-            # 按拓扑顺序执行节点
+            # Execute nodes in topological order
             for node_id in self.node_order:
                 node = self.nodes[node_id]
                 
                 if not node.is_ready():
-                    self.logger.warning(f"节点{node_id}未准备就绪，跳过")
+                    self.logger.warning(f"Node {node_id} is not ready, skipping")
                     continue
                 
-                # 收集输入数据
+                # Collect input data
                 node_inputs = self._collect_node_inputs(node_id)
                 
-                # 执行节点
+                # Execute node
                 node_outputs = node.process(node_inputs)
                 
-                # 缓存输出数据
+                # Cache output data
                 self.data_cache[node_id] = node_outputs
             
-            # 收集最终输出
+            # Collect final outputs
             outputs = self._collect_final_outputs()
             
             execution_time = time.time() - start_time
             self.execution_times.append(execution_time)
             
-            # 保持最近100次的记录
+            # Keep only the most recent 100 records
             if len(self.execution_times) > 100:
                 self.execution_times.pop(0)
             
-            self.logger.info(f"Graph执行完成，耗时: {execution_time:.3f}s")
+            self.logger.info(f"Graph execution completed, time taken: {execution_time:.3f}s")
             return outputs
             
         except Exception as e:
-            self.logger.error(f"Graph执行失败: {e}")
+            self.logger.error(f"Graph execution failed: {e}")
             raise
     
     def _collect_node_inputs(self, node_id: str) -> Dict[str, Union[Frame, Flow, Any]]:
-        """收集节点的输入数据"""
+        """Collect node input data"""
         node = self.nodes[node_id]
         inputs = {}
         
         for port in node.get_input_ports():
             target_key = f"{node_id}:{port}"
             
-            # 查找连接到这个端口的源节点
+            # First check if there's initial input data for this node and port
+            initial_input_key = f"{node_id}:{port}"
+            if initial_input_key in self.data_cache:
+                inputs[port] = self.data_cache[initial_input_key]
+                continue
+            
+            # Then look for connected nodes
             for source in self.reverse_connections.get(target_key, []):
                 source_node_id, source_port = source.split(":")
                 
-                # 从缓存中获取数据
+                # Get data from cache
                 if source_node_id in self.data_cache:
                     source_data = self.data_cache[source_node_id]
                     if source_port in source_data:
@@ -342,12 +348,12 @@ class Graph:
         return inputs
     
     def _collect_final_outputs(self) -> Dict[str, Union[Frame, Flow, Any]]:
-        """收集最终输出数据"""
+        """Collect final output data"""
         outputs = {}
         
         for node_id, node in self.nodes.items():
             if node.node_type == NodeType.OUTPUT:
-                # 收集输出节点的输入作为最终输出
+                # Collect output node inputs as final outputs
                 node_inputs = self._collect_node_inputs(node_id)
                 for port, data in node_inputs.items():
                     outputs[f"{node_id}_{port}"] = data
@@ -355,16 +361,16 @@ class Graph:
         return outputs
     
     def _remove_node_connections(self, node_id: str):
-        """移除节点的所有连接"""
+        """Remove all connections for a node"""
         node = self.nodes[node_id]
         
-        # 移除输出连接
+        # Remove output connections
         for port in node.get_output_ports():
             connection_key = f"{node_id}:{port}"
             if connection_key in self.connections:
                 del self.connections[connection_key]
         
-        # 移除输入连接
+        # Remove input connections
         for port in node.get_input_ports():
             target_key = f"{node_id}:{port}"
             if target_key in self.reverse_connections:
@@ -379,15 +385,15 @@ class Graph:
                 del self.reverse_connections[target_key]
     
     def get_node(self, node_id: str) -> Optional[Node]:
-        """获取指定节点"""
+        """Get specified node"""
         return self.nodes.get(node_id)
     
     def get_nodes_by_type(self, node_type: NodeType) -> List[Node]:
-        """获取指定类型的节点"""
+        """Get nodes of specified type"""
         return [node for node in self.nodes.values() if node.node_type == node_type]
     
     def get_connections(self) -> List[Tuple[str, str]]:
-        """获取所有连接"""
+        """Get all connections"""
         connections = []
         for source, targets in self.connections.items():
             for target in targets:
@@ -395,7 +401,7 @@ class Graph:
         return connections
     
     def get_performance_stats(self) -> Dict[str, Any]:
-        """获取性能统计"""
+        """Get performance statistics"""
         if not self.execution_times:
             return {
                 "total_executions": self.total_executions,
@@ -413,7 +419,7 @@ class Graph:
         }
     
     def reset(self):
-        """重置Graph状态"""
+        """Reset Graph state"""
         for node in self.nodes.values():
             node.reset()
         
@@ -422,10 +428,10 @@ class Graph:
         self.total_executions = 0
         self._is_validated = False
         
-        self.logger.info("Graph状态已重置")
+        self.logger.info("Graph state reset")
     
     def to_dict(self) -> Dict[str, Any]:
-        """转换为字典格式"""
+        """Convert to dictionary format"""
         return {
             "graph_id": self.graph_id,
             "nodes": {node_id: {
