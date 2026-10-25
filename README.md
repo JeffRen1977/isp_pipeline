@@ -1,5 +1,7 @@
 # AI ISP Simulator
 
+**This code accompanies Chapters 3-6 of "Mobile Computational Photography".** See [chapter_3_6_ISP_Implementation_Architecture.md](chapter_3_6_ISP_Implementation_Architecture.md) for the detailed architecture documentation mapping to the book.
+
 An Image Signal Processor (ISP) simulator for computational photography applications. This project implements a modular ISP pipeline using a graph-based architecture that supports real RAW image processing from mobile phones.
 
 ## 🚀 Quick Start
