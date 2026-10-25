@@ -6,25 +6,31 @@ An Image Signal Processor (ISP) simulator for computational photography applicat
 
 ## 🚀 Quick Start
 
-### Requirements
-
-- Python 3.8+
-- NumPy, OpenCV, PyYAML
-
-### Installation
+### 1. Set Up Environment
 
 ```bash
+# Activate the shared virtual environment (from this folder)
+source ../virtual_env/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### Run the Test
+### 2. Run the Demo
 
 ```bash
-# Process real RAW images from mobile phones
-python test_front_camera_raw.py
+cd ai_isp_simulator
+python3 test_front_camera_raw.py
 ```
 
-This will process RAW images from `data/front_camera/` and save results to `results/`.
+This processes RAW images from `data/front_camera/` and saves results to `results/`.
+
+### 3. Run Unit Tests
+
+```bash
+# From the AI_ISP root folder
+python3 -m pytest ai_isp_simulator/tests/ -v
+```
 
 ## 📁 Project Structure
 
